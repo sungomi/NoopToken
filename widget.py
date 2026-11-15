@@ -649,7 +649,7 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="header pywebview-drag-region">
     <div class="title-area">
       <span class="live-indicator" id="pulseDot"></span>
-      <span id="appTitleText">AI 사용량 모니터</span>
+      <span id="appTitleText">AI 사용량 모니터 v1.0</span>
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
@@ -700,7 +700,7 @@ UI_HTML = r"""<!DOCTYPE html>
         btn.textContent = "사용량 기준";
         btn.classList.add("active");
       }
-      if (titleEl) titleEl.textContent = "AI 사용량 모니터";
+      if (titleEl) titleEl.textContent = "AI 사용량 모니터 v1.0";
     } else {
       if (btn) {
         btn.textContent = "잔여량 기준";
@@ -1666,7 +1666,7 @@ def start_background_http_server(port: int = 17890) -> int:
 
 def run_cli_summary():
     data = fetch_all_quotas(force=True)
-    print(f"\n=== AI 사용량 모니터 ({data['updated_at']}) ===")
+    print(f"\n=== AI 사용량 모니터 v1.0 ({data['updated_at']}) ===")
     for p in data["providers"]:
         if not p.get("logged_in"):
             print(f"• {p['name']:16s} [미로그인] -> 위젯에서 '{p.get('login_label')}' 버튼을 눌러 로그인하세요.")
@@ -1703,7 +1703,7 @@ def main():
 
         cfg = load_config()
         window = webview.create_window(
-            title="AI 사용량 모니터",
+            title="AI 사용량 모니터 v1.0",
             url=url,
             js_api=GLOBAL_API,
             width=395,
