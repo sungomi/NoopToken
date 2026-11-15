@@ -2,18 +2,23 @@ import argparse
 import base64
 import hashlib
 import json
+import logging
 import os
 import platform
 import secrets
 import shutil
+import signal
+import socket
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+import traceback
 import urllib.parse
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any, Dict, List
 import requests
 
@@ -1512,6 +1517,8 @@ def _exchange_claude_code(raw_code: str) -> bool:
 
 
 class CodexCallbackHandler(BaseHTTPRequestHandler):
+    timeout = 10
+
     def log_message(self, format, *args):
         pass
 
@@ -1564,9 +1571,104 @@ class CodexCallbackHandler(BaseHTTPRequestHandler):
             threading.Timer(0.4, _close_all_popup_procs).start()
 
 
+def _get_runtime_dir() -> Path:
+    if platform.system() == "Windows":
+        local_app = os.environ.get("LOCALAPPDATA", "")
+        base = Path(local_app) if local_app else (Path.home() / "AppData/Local")
+        d = base / "AIQuotaMonitor_v1.0"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+    return Path.home()
+
+
+def _setup_logging(cli_mode: bool = False) -> Path:
+    rt_dir = _get_runtime_dir()
+    log_path = rt_dir / ("widget.log" if platform.system() == "Windows" else ".ai_quota_widget.log")
+    try:
+        if not cli_mode:
+            log_file = open(log_path, "a", encoding="utf-8", buffering=1)
+            if sys.stdout is None or platform.system() == "Windows":
+                sys.stdout = log_file
+            if sys.stderr is None or platform.system() == "Windows":
+                sys.stderr = log_file
+        logging.basicConfig(
+            filename=str(log_path),
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    return log_path
+
+
+def _cleanup_previous_instance() -> None:
+    """Terminates any previous stuck/zombie instance of AI Monitor before starting."""
+    rt_dir = _get_runtime_dir()
+    pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".ai_quota_widget.pid")
+    my_pid = os.getpid()
+
+    if pid_path.exists():
+        try:
+            old_pid = int(pid_path.read_text(encoding="utf-8").strip())
+            if old_pid > 0 and old_pid != my_pid:
+                logging.info(f"Cleaning up previous instance PID {old_pid}")
+                if platform.system() == "Windows":
+                    subprocess.run(
+                        ["taskkill", "/F", "/PID", str(old_pid), "/T"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=3.0,
+                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+                    )
+                else:
+                    os.kill(old_pid, signal.SIGTERM)
+                time.sleep(0.25)
+        except Exception:
+            pass
+
+    # On Windows, also clean up any zombie pythonw.exe holding port 17890
+    if platform.system() == "Windows":
+        try:
+            ps_kill = (
+                f"Get-NetTCPConnection -LocalPort 17890 -ErrorAction SilentlyContinue | "
+                f" Select-Object -ExpandProperty OwningProcess -Unique | "
+                f" Where-Object {{ $_ -gt 0 -and $_ -ne {my_pid} }} | "
+                f" ForEach-Object {{ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }}"
+            )
+            subprocess.run(
+                ["powershell.exe", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_kill],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3.0,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+            )
+        except Exception:
+            pass
+
+    try:
+        pid_path.write_text(str(my_pid), encoding="utf-8")
+    except Exception:
+        pass
+
+
+class ExclusiveThreadingHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+    # On Windows, allow_reuse_address=True sets SO_REUSEADDR which permits port hijacking by zombie processes.
+    allow_reuse_address = platform.system() != "Windows"
+
+    def server_bind(self):
+        if platform.system() == "Windows" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            except OSError:
+                pass
+        super().server_bind()
+
+
 def _ensure_codex_callback_server():
     try:
-        server = HTTPServer(("127.0.0.1", 1455), CodexCallbackHandler)
+        server = ExclusiveThreadingHTTPServer(("127.0.0.1", 1455), CodexCallbackHandler)
         t = threading.Thread(target=server.serve_forever, daemon=True)
         t.start()
     except OSError:
@@ -1646,6 +1748,8 @@ GLOBAL_API = WidgetApi()
 
 
 class LocalHTTPHandler(BaseHTTPRequestHandler):
+    timeout = 10
+
     def log_message(self, format, *args):
         pass
 
@@ -1770,12 +1874,14 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
 def start_background_http_server(port: int = 17890) -> int:
     for p in range(port, port + 20):
         try:
-            server = HTTPServer(("127.0.0.1", p), LocalHTTPHandler)
+            server = ExclusiveThreadingHTTPServer(("127.0.0.1", p), LocalHTTPHandler)
             t = threading.Thread(target=server.serve_forever, daemon=True)
             t.start()
             OAUTH_STATE["server_port"] = p
+            logging.info(f"Local ThreadingHTTPServer bound exclusively on 127.0.0.1:{p}")
             return p
-        except OSError:
+        except OSError as e:
+            logging.warning(f"Port {p} busy ({e}), trying next...")
             continue
     return 0
 
@@ -1806,9 +1912,15 @@ def main():
     parser.add_argument("--cli", action="store_true", help="터미널에서 상태 확인")
     args = parser.parse_args()
 
+    log_path = _setup_logging(cli_mode=bool(args.cli))
+
     if args.cli:
         run_cli_summary()
         return
+
+    logging.info("==========================================")
+    logging.info(f"Starting AI Monitor v1.0 (PID={os.getpid()}, OS={platform.system()})")
+    _cleanup_previous_instance()
 
     port = start_background_http_server(17890)
     _ensure_codex_callback_server()
@@ -1831,9 +1943,22 @@ def main():
             background_color="#080a0f",
         )
         GLOBAL_API.window = window
+
+        def _on_closed():
+            logging.info("Widget window closed by user; terminating process cleanly.")
+            os._exit(0)
+
+        try:
+            window.events.closed += _on_closed
+        except Exception:
+            pass
+
+        logging.info(f"AI Monitor v1.0 window created at {url} (log: {log_path})")
         print(f"AI Monitor v1.0 started at {url}")
         webview.start(debug=False)
+        os._exit(0)
     except Exception as e:
+        logging.error(f"WebView startup error: {e}\n{traceback.format_exc()}")
         print(f"Fallback to browser ({e}): {url}")
         webbrowser.open(url)
         threading.Event().wait()
