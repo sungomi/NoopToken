@@ -17,6 +17,7 @@ Thumbs.db
 *.spec
 *.dmg
 *.exe
+assets/icon.iconset/
 
 # User local credentials (never commit)
 .ai_quota_widget.json

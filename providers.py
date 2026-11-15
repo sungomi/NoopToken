@@ -93,7 +93,11 @@ def save_config(updates: Dict[str, Any]) -> Dict[str, Any]:
         if k == "auth" and isinstance(v, dict):
             for pk, pv in v.items():
                 if pk in cfg["auth"] and isinstance(pv, dict):
-                    cfg["auth"][pk].update(pv)
+                    for ak, av in pv.items():
+                        # Never overwrite existing non-empty tokens/keys with an empty value during partial updates
+                        if av == "" and cfg["auth"][pk].get(ak):
+                            continue
+                        cfg["auth"][pk][ak] = av
         elif k in ("box_order", "cached_providers") and isinstance(v, dict):
             cfg[k].update(v)
         else:
@@ -103,6 +107,13 @@ def save_config(updates: Dict[str, Any]) -> Dict[str, Any]:
     except Exception:
         pass
     return cfg
+
+
+def invalidate_provider_cache(provider_id: Optional[str] = None) -> None:
+    if provider_id:
+        _MEM_CACHE.pop(provider_id, None)
+    else:
+        _MEM_CACHE.clear()
 
 
 def clear_provider_auth(provider_id: str) -> Dict[str, Any]:
@@ -191,7 +202,7 @@ def _format_reset_countdown(reset_dt: Optional[datetime]) -> str:
 def get_agy_oauth_client(cfg: Optional[Dict[str, Any]] = None) -> Tuple[str, str]:
     env_id = os.environ.get("AGY_CLIENT_ID", "").strip()
     env_sec = os.environ.get("AGY_CLIENT_SECRET", "").strip()
-    if env_id and env_sec:
+    if env_id.startswith("1071006060591-") and len(env_sec) == 35:
         return env_id, env_sec
 
     if cfg is None:
@@ -199,7 +210,7 @@ def get_agy_oauth_client(cfg: Optional[Dict[str, Any]] = None) -> Tuple[str, str
     agy_auth = cfg.get("auth", {}).get("antigravity", {})
     cid = agy_auth.get("client_id", "").strip()
     csec = agy_auth.get("client_secret", "").strip()
-    if cid and csec:
+    if cid.startswith("1071006060591-") and len(csec) == 35 and csec.startswith("GOCSPX-K58"):
         return cid, csec
 
     # Auto-detect from local Antigravity IDE installation on macOS / Windows / Linux
@@ -212,9 +223,13 @@ def get_agy_oauth_client(cfg: Optional[Dict[str, Any]] = None) -> Tuple[str, str
         ])
     elif sys_name == "Windows":
         local_app = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData/Local")))
+        prog_files = Path(os.environ.get("ProgramFiles", "C:/Program Files"))
         candidates.extend([
             local_app / "Programs/Antigravity/resources/bin/language_server.exe",
+            local_app / "Programs/Antigravity/resources/app/extensions/antigravity/bin/language_server_windows_x64.exe",
+            local_app / "Programs/Antigravity/resources/app/extensions/antigravity/bin/language_server.exe",
             local_app / "Antigravity/resources/bin/language_server.exe",
+            prog_files / "Antigravity/resources/bin/language_server.exe",
         ])
     else:
         candidates.extend([
@@ -226,8 +241,8 @@ def get_agy_oauth_client(cfg: Optional[Dict[str, Any]] = None) -> Tuple[str, str
         if bin_path.exists():
             try:
                 raw = bin_path.read_bytes()
-                m_id = re.search(rb"[0-9]{10,}-[a-z0-9]+\.apps\.googleusercontent\.com", raw)
-                m_sec = re.search(rb"GOCSPX-[A-Za-z0-9_-]{24,36}", raw)
+                m_id = re.search(rb"1071006060591-[a-z0-9]+\.apps\.googleusercontent\.com", raw)
+                m_sec = re.search(rb"GOCSPX-K58[A-Za-z0-9_-]{25}", raw)
                 if m_id and m_sec:
                     cid = m_id.group(0).decode("ascii")
                     csec = m_sec.group(0).decode("ascii")

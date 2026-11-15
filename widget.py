@@ -26,6 +26,7 @@ from providers import (
     clear_provider_auth,
     fetch_all_quotas,
     get_agy_oauth_client,
+    invalidate_provider_cache,
     load_config,
     save_config,
 )
@@ -105,6 +106,7 @@ UI_HTML = r"""<!DOCTYPE html>
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 11px 14px 9px 14px;
     background: rgba(8, 10, 15, 0.86);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -113,29 +115,51 @@ UI_HTML = r"""<!DOCTYPE html>
     z-index: 30;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    white-space: nowrap;
   }
   .title-area {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-weight: 700;
     font-size: 13px;
     letter-spacing: -0.02em;
     color: #f1f5f9;
+    white-space: nowrap;
+    flex-shrink: 0;
+    word-break: keep-all;
+  }
+  .app-logo-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+  }
+  .app-logo-badge svg {
+    width: 12px;
+    height: 12px;
   }
   .live-indicator {
     position: relative;
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #10b981;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
     transition: background 0.25s ease;
+    flex-shrink: 0;
   }
   .controls {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .ctrl-btn {
     background: rgba(255, 255, 255, 0.04);
@@ -143,7 +167,7 @@ UI_HTML = r"""<!DOCTYPE html>
     color: #94a3b8;
     border-radius: 7px;
     height: 26px;
-    padding: 0 8px;
+    padding: 0 7.5px;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
@@ -152,6 +176,10 @@ UI_HTML = r"""<!DOCTYPE html>
     justify-content: center;
     gap: 4px;
     transition: all 0.16s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    word-break: keep-all;
+    line-height: 1;
   }
   .ctrl-btn:hover {
     color: #f8fafc;
@@ -204,11 +232,13 @@ UI_HTML = r"""<!DOCTYPE html>
     color: #94a3b8;
     font-weight: 600;
     letter-spacing: -0.01em;
+    white-space: nowrap;
   }
   .mini-pill-val {
     font-size: 13px;
     font-weight: 800;
     letter-spacing: -0.02em;
+    white-space: nowrap;
   }
   .mini-progress {
     height: 3.5px;
@@ -379,16 +409,20 @@ UI_HTML = r"""<!DOCTYPE html>
     display: flex;
     align-items: baseline;
     gap: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .rem-pct {
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.02em;
+    white-space: nowrap;
   }
   .rem-label {
     font-size: 10px;
     color: var(--muted);
     font-weight: 600;
+    white-space: nowrap;
   }
   .chevron-badge {
     width: 20px;
@@ -490,6 +524,8 @@ UI_HTML = r"""<!DOCTYPE html>
     padding: 1.5px 6px;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.04);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .box-chevron {
     font-size: 9.5px;
@@ -528,11 +564,15 @@ UI_HTML = r"""<!DOCTYPE html>
     color: #cbd5e1;
     font-weight: 600;
     font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .bar-meta {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .bar-reset {
     font-size: 10px;
@@ -541,12 +581,14 @@ UI_HTML = r"""<!DOCTYPE html>
     padding: 1px 6px;
     border-radius: 4px;
     font-weight: 500;
+    white-space: nowrap;
   }
   .bar-val {
     font-weight: 800;
     font-size: 11.5px;
     min-width: 38px;
     text-align: right;
+    white-space: nowrap;
   }
   .bar-track {
     width: 100%;
@@ -648,8 +690,15 @@ UI_HTML = r"""<!DOCTYPE html>
 
   <div class="header pywebview-drag-region">
     <div class="title-area">
+      <span class="app-logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round">
+          <line x1="4" y1="7" x2="18" y2="7" />
+          <line x1="4" y1="12" x2="14" y2="12" />
+          <line x1="4" y1="17" x2="20" y2="17" />
+        </svg>
+      </span>
       <span class="live-indicator" id="pulseDot"></span>
-      <span id="appTitleText">AI 사용량 모니터 v1.0</span>
+      <span id="appTitleText">AI 모니터 v1.0</span>
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
@@ -695,18 +744,17 @@ UI_HTML = r"""<!DOCTYPE html>
   function updateModeHeaderUI() {
     const btn = document.getElementById("btnDisplayMode");
     const titleEl = document.getElementById("appTitleText");
+    if (titleEl) titleEl.textContent = "AI 모니터 v1.0";
     if (displayMode === "used") {
       if (btn) {
         btn.textContent = "사용량 기준";
         btn.classList.add("active");
       }
-      if (titleEl) titleEl.textContent = "AI 사용량 모니터 v1.0";
     } else {
       if (btn) {
         btn.textContent = "잔여량 기준";
         btn.classList.remove("active");
       }
-      if (titleEl) titleEl.textContent = "AI 잔여량 모니터";
     }
   }
 
@@ -828,17 +876,36 @@ UI_HTML = r"""<!DOCTYPE html>
     }
   }
 
+  let loginPollTimer = null;
+
   async function openLogin(providerId, event) {
     if (event) event.stopPropagation();
     if (providerId === "claude" || providerId === "cursor") {
       openPasteBoxes[providerId] = true;
+      if (lastData) render(lastData);
     }
     if (window.pywebview && window.pywebview.api) {
       await window.pywebview.api.open_login_window(providerId);
     } else {
       await fetch("/api/login/" + providerId, { method: "POST" });
     }
-    await refreshNow(true);
+    if (loginPollTimer) clearInterval(loginPollTimer);
+    let ticks = 0;
+    loginPollTimer = setInterval(async () => {
+      ticks++;
+      await refreshNow(true);
+      if (lastData && lastData.providers) {
+        const p = lastData.providers.find(x => x.id === providerId);
+        if (p && p.logged_in) {
+          clearInterval(loginPollTimer);
+          loginPollTimer = null;
+        }
+      }
+      if (ticks > 40) {
+        clearInterval(loginPollTimer);
+        loginPollTimer = null;
+      }
+    }, 1500);
   }
 
   async function submitCodeOrToken(providerId, event) {
@@ -1261,22 +1328,56 @@ def _close_all_popup_procs():
 
 def _open_floating_chrome_popup(url: str, isolated_closeable: bool = True):
     sys_name = platform.system()
-    binaries: List[str] = []
+
+    # 1. If Google Chrome is installed, open directly in the user's normal full-sized Chrome window
+    #    using their existing logged-in Chrome profile (so they can just click their account immediately).
+    chrome_candidates: List[str] = []
     if sys_name == "Darwin":
-        binaries = [
+        chrome_candidates = [
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            str(Path.home() / "Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+        ]
+    elif sys_name == "Windows":
+        chrome_candidates = [
+            os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+        ]
+
+    for cbin in chrome_candidates:
+        if os.path.exists(cbin):
+            try:
+                if sys_name == "Darwin":
+                    subprocess.Popen(
+                        ["open", "-a", "Google Chrome", url],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                else:
+                    subprocess.Popen(
+                        [cbin, url],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                return
+            except Exception:
+                pass
+
+    # 2. Fallback when Chrome is NOT installed: open small floating login window (Edge / Brave / WebView)
+    fallback_binaries: List[str] = []
+    if sys_name == "Darwin":
+        fallback_binaries = [
             "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
             "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
         ]
     elif sys_name == "Windows":
-        binaries = [
-            os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+        fallback_binaries = [
             os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+            os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+            os.path.expandvars(r"%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe"),
         ]
 
-    for b in binaries:
+    for b in fallback_binaries:
         if os.path.exists(b):
             try:
                 if isolated_closeable:
@@ -1288,7 +1389,7 @@ def _open_floating_chrome_popup(url: str, isolated_closeable: bool = True):
                             f"--user-data-dir={tmp_dir}",
                             "--no-first-run",
                             "--no-default-browser-check",
-                            "--window-size=480,680",
+                            "--window-size=500,700",
                             "--window-position=420,80",
                         ],
                         stdout=subprocess.DEVNULL,
@@ -1297,7 +1398,7 @@ def _open_floating_chrome_popup(url: str, isolated_closeable: bool = True):
                     OAUTH_STATE["popup_procs"].append((proc, tmp_dir))
                 else:
                     subprocess.Popen(
-                        [b, f"--app={url}", "--window-size=480,680", "--window-position=420,80"],
+                        [b, f"--app={url}", "--window-size=500,700", "--window-position=420,80"],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                     )
@@ -1326,7 +1427,7 @@ def _build_antigravity_oauth_url(port: int) -> str:
         "response_type": "code",
         "scope": " ".join(AGY_SCOPES),
         "access_type": "offline",
-        "prompt": "consent",
+        "prompt": "select_account consent",
         "code_challenge": challenge,
         "code_challenge_method": "S256",
     }
@@ -1402,6 +1503,7 @@ def _exchange_claude_code(raw_code: str) -> bool:
                         }
                     }
                 })
+                invalidate_provider_cache("claude")
                 _close_all_popup_procs()
                 return True
     except Exception:
@@ -1447,6 +1549,12 @@ class CodexCallbackHandler(BaseHTTPRequestHandler):
                                     }
                                 }
                             })
+                            invalidate_provider_cache("codex")
+                            if GLOBAL_API.window:
+                                try:
+                                    GLOBAL_API.window.evaluate_js("refreshNow(true)")
+                                except Exception:
+                                    pass
                 except Exception:
                     pass
             self.send_response(200)
@@ -1489,7 +1597,7 @@ class WidgetApi:
         save_config({"compact_mode": bool(compact)})
         if self.window:
             try:
-                self.window.resize(395, 145 if compact else 720)
+                self.window.resize(440, 150 if compact else 740)
             except Exception:
                 pass
         return True
@@ -1524,10 +1632,12 @@ class WidgetApi:
         if provider_id == "claude":
             if val.startswith("sk-ant-sid"):
                 save_config({"auth": {"claude": {"session_key": val}}})
+                invalidate_provider_cache("claude")
                 return True
             return _exchange_claude_code(val)
         elif provider_id == "cursor":
             save_config({"auth": {"cursor": {"session_token": val}}})
+            invalidate_provider_cache("cursor")
             return True
         return False
 
@@ -1597,6 +1707,12 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
                                 }
                             }
                         })
+                        invalidate_provider_cache("antigravity")
+                        if GLOBAL_API.window:
+                            try:
+                                GLOBAL_API.window.evaluate_js("refreshNow(true)")
+                            except Exception:
+                                pass
                 except Exception:
                     pass
 
@@ -1666,7 +1782,7 @@ def start_background_http_server(port: int = 17890) -> int:
 
 def run_cli_summary():
     data = fetch_all_quotas(force=True)
-    print(f"\n=== AI 사용량 모니터 v1.0 ({data['updated_at']}) ===")
+    print(f"\n=== AI 모니터 v1.0 ({data['updated_at']}) ===")
     for p in data["providers"]:
         if not p.get("logged_in"):
             print(f"• {p['name']:16s} [미로그인] -> 위젯에서 '{p.get('login_label')}' 버튼을 눌러 로그인하세요.")
@@ -1703,11 +1819,11 @@ def main():
 
         cfg = load_config()
         window = webview.create_window(
-            title="AI 사용량 모니터 v1.0",
+            title="AI 모니터 v1.0",
             url=url,
             js_api=GLOBAL_API,
-            width=395,
-            height=720,
+            width=440,
+            height=740,
             x=40,
             y=60,
             resizable=True,
@@ -1715,10 +1831,10 @@ def main():
             background_color="#080a0f",
         )
         GLOBAL_API.window = window
-        print(f"데스크톱 위젯이 실행되었습니다! (로컬 주소: {url})")
+        print(f"AI Monitor v1.0 started at {url}")
         webview.start(debug=False)
     except Exception as e:
-        print(f"위젯 실행 오류 ({e}), 브라우저로 엽니다: {url}")
+        print(f"Fallback to browser ({e}): {url}")
         webbrowser.open(url)
         threading.Event().wait()
 
