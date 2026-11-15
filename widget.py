@@ -794,15 +794,11 @@ UI_HTML = r"""<!DOCTYPE html>
   async function syncOrderToBackend() {
     saveStateToLocal();
     try {
-      if (window.pywebview && window.pywebview.api) {
-        await window.pywebview.api.save_order(cardOrder, boxOrder);
-      } else {
-        await fetch("/api/save_order", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({card_order: cardOrder, box_order: boxOrder})
-        });
-      }
+      await fetch("/api/save_order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({card_order: cardOrder, box_order: boxOrder})
+      });
     } catch (e) {}
   }
 
@@ -870,12 +866,8 @@ UI_HTML = r"""<!DOCTYPE html>
 
   async function fetchData(force = false) {
     try {
-      if (window.pywebview && window.pywebview.api) {
-        return await window.pywebview.api.get_quotas(force);
-      } else {
-        const r = await fetch("/api/quotas" + (force ? "?force=1" : ""));
-        return await r.json();
-      }
+      const r = await fetch("/api/quotas" + (force ? "?force=1" : ""));
+      return await r.json();
     } catch (e) {
       return null;
     }
@@ -889,11 +881,9 @@ UI_HTML = r"""<!DOCTYPE html>
       openPasteBoxes[providerId] = true;
       if (lastData) render(lastData);
     }
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.open_login_window(providerId);
-    } else {
+    try {
       await fetch("/api/login/" + providerId, { method: "POST" });
-    }
+    } catch (e) {}
     if (loginPollTimer) clearInterval(loginPollTimer);
     let ticks = 0;
     loginPollTimer = setInterval(async () => {
@@ -918,26 +908,22 @@ UI_HTML = r"""<!DOCTYPE html>
     const el = document.getElementById("input_" + providerId);
     if (!el || !el.value.trim()) return;
     const val = el.value.trim();
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.submit_auth_code(providerId, val);
-    } else {
+    try {
       await fetch("/api/submit_code", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({provider_id: providerId, code: val})
       });
-    }
+    } catch (e) {}
     openPasteBoxes[providerId] = false;
     await refreshNow(true);
   }
 
   async function logoutProvider(providerId, event) {
     if (event) event.stopPropagation();
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.logout_provider(providerId);
-    } else {
+    try {
       await fetch("/api/logout/" + providerId, { method: "POST" });
-    }
+    } catch (e) {}
     await refreshNow(true);
   }
 
@@ -1270,17 +1256,25 @@ UI_HTML = r"""<!DOCTYPE html>
     const btn = document.getElementById("btnCompact");
     btn.textContent = compactMode ? "확장" : "미니바";
     btn.classList.toggle("active", compactMode);
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.set_compact(compactMode);
-    }
+    try {
+      await fetch("/api/window", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({compact: compactMode})
+      });
+    } catch (e) {}
   }
 
   async function togglePin() {
     alwaysOnTop = !alwaysOnTop;
     document.getElementById("btnPin").classList.toggle("active", alwaysOnTop);
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.set_always_on_top(alwaysOnTop);
-    }
+    try {
+      await fetch("/api/window", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({always_on_top: alwaysOnTop})
+      });
+    } catch (e) {}
   }
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -1755,6 +1749,13 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/health":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+            return
+
         if parsed.path == "/api/quotas":
             qs = urllib.parse.parse_qs(parsed.query)
             force = bool(qs.get("force"))
@@ -1870,6 +1871,50 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"ok":true}')
             return
 
+        if self.path == "/api/window":
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length).decode("utf-8")
+            payload = json.loads(raw) if raw else {}
+            if "compact" in payload:
+                compact = bool(payload["compact"])
+                save_config({"compact_mode": compact})
+                if platform.system() == "Windows":
+                    try:
+                        import ctypes
+                        from ctypes import wintypes
+                        user32 = ctypes.windll.user32
+                        hwnd = user32.FindWindowW(None, "AI 모니터 v1.0")
+                        if hwnd:
+                            rect = wintypes.RECT()
+                            user32.GetWindowRect(hwnd, ctypes.byref(rect))
+                            cur_w = max(440, rect.right - rect.left)
+                            scale = cur_w / 440.0
+                            target_h = int((155 if compact else 740) * scale)
+                            user32.SetWindowPos(hwnd, 0, 0, 0, cur_w, target_h, 0x0002 | 0x0004 | 0x0010)
+                    except Exception:
+                        pass
+                else:
+                    GLOBAL_API.set_compact(compact)
+            if "always_on_top" in payload:
+                on_top = bool(payload["always_on_top"])
+                save_config({"always_on_top": on_top})
+                if platform.system() == "Windows":
+                    try:
+                        import ctypes
+                        user32 = ctypes.windll.user32
+                        hwnd = user32.FindWindowW(None, "AI 모니터 v1.0")
+                        if hwnd:
+                            z_order = -1 if on_top else -2
+                            user32.SetWindowPos(hwnd, z_order, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)
+                    except Exception:
+                        pass
+                else:
+                    GLOBAL_API.set_always_on_top(on_top)
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+            return
+
 
 def start_background_http_server(port: int = 17890) -> int:
     for p in range(port, port + 20):
@@ -1907,10 +1952,162 @@ def run_cli_summary():
     print()
 
 
+def _patch_pywebview_winforms_deadlock() -> None:
+    """
+    Fixes the pywebview 6.x + pythonnet 3.x GIL / WinForms STA UI thread deadlock on Windows:
+    1. Replaces `while thread.IsAlive: thread.Join(500)` (.NET CLR blocking call that starves the GIL)
+       with a pure Python `threading.Event.wait(0.5)` (`Py_BEGIN_ALLOW_THREADS` in C).
+    2. Removes the 500ms WinForms.Timer (`timer_tick`) and WebView2 `WebResourceRequested` /
+       `WebResourceResponseReceived` / `inject_pywebview` background thread `Control.Invoke` calls
+       so the WinForms UI thread and Python GIL never contend or deadlock.
+    """
+    if platform.system() != "Windows":
+        return
+    try:
+        import ctypes
+        import webview.platforms.winforms as wf
+        import webview.platforms.edgechromium as ec
+        import webview.util as wutil
+
+        def _noop_inject_pywebview(platform_name, window):
+            window.events.before_load.set()
+            window.events._pywebviewready.set()
+            window.events.loaded.set()
+
+        wutil.inject_pywebview = _noop_inject_pywebview
+        ec.inject_pywebview = _noop_inject_pywebview
+
+        def _safe_on_webview_ready(self, sender, args):
+            try:
+                if not args.IsSuccess:
+                    logging.error(f"WebView2 initialization failed: {args.InitializationException}")
+                    return
+                settings = sender.CoreWebView2.Settings
+                settings.AreDefaultScriptDialogsEnabled = True
+                settings.IsBuiltInErrorPageEnabled = True
+                settings.IsScriptEnabled = True
+                settings.IsWebMessageEnabled = False
+                settings.IsStatusBarEnabled = False
+                settings.IsSwipeNavigationEnabled = False
+                settings.IsZoomControlEnabled = True
+                if self.pywebview_window.real_url:
+                    logging.info(f"[GUI] WebView2 ready, navigating to {self.pywebview_window.real_url}")
+                    self.load_url(self.pywebview_window.real_url)
+                elif self.pywebview_window.html:
+                    self.load_html(self.pywebview_window.html, "")
+            except Exception as ex:
+                logging.error(f"Error in _safe_on_webview_ready: {ex}")
+
+        def _safe_on_navigation_completed(self, sender, _):
+            self.pywebview_window.events.before_load.set()
+            self.pywebview_window.events._pywebviewready.set()
+            self.pywebview_window.events.loaded.set()
+            logging.info("[GUI] WebView2 NavigationCompleted")
+
+        ec.EdgeChrome.on_webview_ready = _safe_on_webview_ready
+        ec.EdgeChrome.on_navigation_completed = _safe_on_navigation_completed
+
+        gui_done_event = threading.Event()
+
+        def _safe_create_window(window):
+            def create():
+                try:
+                    logging.info("[GUI] STA thread create() entered")
+                    browser = wf.BrowserView.BrowserForm(window, wf.cache_dir)
+                    wf.BrowserView.instances[window.uid] = browser
+                    window.events.before_show.set()
+                    browser.Show()
+                    browser.Activate()
+                    wf._main_window_created.set()
+                    logging.info("[GUI] BrowserForm shown, entering WinForms Application.Run()")
+                    if window.uid == "master":
+                        wf.WinForms.Application.Run(browser)
+                except Exception as ex:
+                    logging.error(f"[GUI] Exception in STA create(): {ex}\n{traceback.format_exc()}")
+                finally:
+                    gui_done_event.set()
+                    os._exit(0)
+
+            if window.uid == "master":
+                if wf.is_chromium:
+                    wf.init_storage()
+                if sys.getwindowsversion().major >= 6:
+                    ctypes.windll.user32.SetProcessDPIAware()
+                thread = wf.Thread(wf.ThreadStart(create))
+                thread.SetApartmentState(wf.ApartmentState.STA)
+                thread.Start()
+                logging.info("[GUI] STA thread started; main thread releasing GIL via Event.wait()")
+                while not gui_done_event.wait(0.5):
+                    pass
+
+        wf.create_window = _safe_create_window
+        logging.info("Applied Windows pywebview WinForms/GIL deadlock-free patch.")
+    except Exception as e:
+        logging.error(f"Failed to patch pywebview winforms: {e}\n{traceback.format_exc()}")
+
+
+def _run_server_worker(port: int, parent_pid: int) -> None:
+    """Runs the HTTP server in a dedicated process completely isolated from the GUI/WinForms GIL."""
+    _setup_logging(cli_mode=False)
+    OAUTH_STATE["server_port"] = port
+    logging.info(f"[ServerWorker] Starting isolated HTTP server on 127.0.0.1:{port} (parent_pid={parent_pid})")
+    _ensure_codex_callback_server()
+    server = ExclusiveThreadingHTTPServer(("127.0.0.1", port), LocalHTTPHandler)
+
+    def _watch_parent():
+        while True:
+            time.sleep(1.5)
+            if parent_pid > 0:
+                if platform.system() == "Windows":
+                    import ctypes
+                    SYNCHRONIZE = 0x00100000
+                    STILL_ACTIVE = 259
+                    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+                    h = ctypes.windll.kernel32.OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, False, parent_pid)
+                    if not h:
+                        logging.info("[ServerWorker] Parent GUI process exited; shutting down server worker.")
+                        os._exit(0)
+                    exit_code = ctypes.c_ulong(0)
+                    ctypes.windll.kernel32.GetExitCodeProcess(h, ctypes.byref(exit_code))
+                    ctypes.windll.kernel32.CloseHandle(h)
+                    if exit_code.value != STILL_ACTIVE:
+                        logging.info("[ServerWorker] Parent GUI process terminated; shutting down server worker.")
+                        os._exit(0)
+                else:
+                    try:
+                        os.kill(parent_pid, 0)
+                    except OSError:
+                        os._exit(0)
+
+    threading.Thread(target=_watch_parent, daemon=True).start()
+    server.serve_forever()
+
+
+def _find_free_port(start_port: int = 17890) -> int:
+    for p in range(start_port, start_port + 20):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if platform.system() == "Windows" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+                try:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+                except OSError:
+                    pass
+            try:
+                s.bind(("127.0.0.1", p))
+                return p
+            except OSError:
+                continue
+    return start_port
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Agent Official Quota Floating Widget")
     parser.add_argument("--cli", action="store_true", help="터미널에서 상태 확인")
+    parser.add_argument("--server-worker", nargs=2, metavar=("PORT", "PARENT_PID"), help=argparse.SUPPRESS)
     args = parser.parse_args()
+
+    if args.server_worker:
+        _run_server_worker(int(args.server_worker[0]), int(args.server_worker[1]))
+        return
 
     log_path = _setup_logging(cli_mode=bool(args.cli))
 
@@ -1922,18 +2119,41 @@ def main():
     logging.info(f"Starting AI Monitor v1.0 (PID={os.getpid()}, OS={platform.system()})")
     _cleanup_previous_instance()
 
-    port = start_background_http_server(17890)
-    _ensure_codex_callback_server()
-    url = f"http://127.0.0.1:{port}"
+    if platform.system() == "Windows":
+        # On Windows, run the HTTP server in a separate child process so the GUI process has ZERO background threads
+        # and ZERO GIL contention with pythonnet / WinForms.
+        port = _find_free_port(17890)
+        OAUTH_STATE["server_port"] = port
+        server_proc = subprocess.Popen(
+            [sys.executable, os.path.abspath(__file__), "--server-worker", str(port), str(os.getpid())],
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+            close_fds=True,
+        )
+        logging.info(f"Spawned isolated server worker process PID={server_proc.pid} on port {port}")
+        url = f"http://127.0.0.1:{port}"
+        for _ in range(30):
+            try:
+                r = requests.get(f"{url}/api/health", timeout=0.3)
+                if r.status_code == 200:
+                    logging.info(f"Server worker healthy at {url}")
+                    break
+            except Exception:
+                time.sleep(0.1)
+    else:
+        port = start_background_http_server(17890)
+        _ensure_codex_callback_server()
+        url = f"http://127.0.0.1:{port}"
 
     try:
         import webview
+
+        if platform.system() == "Windows":
+            _patch_pywebview_winforms_deadlock()
 
         cfg = load_config()
         window = webview.create_window(
             title="AI 모니터 v1.0",
             url=url,
-            js_api=GLOBAL_API,
             width=440,
             height=740,
             x=40,
