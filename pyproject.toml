@@ -1,0 +1,17 @@
+[project]
+name = "ai-quota-widget"
+version = "1.0.0"
+description = "Cross-platform (macOS & Windows) floating desktop widget for monitoring official AI coding agent usage & quotas (Antigravity, Claude, Cursor, ChatGPT/Codex)."
+readme = "README.md"
+authors = [
+    { name = "sungomi", email = "353765157+sungomi@users.noreply.github.com" }
+]
+requires-python = ">=3.9"
+dependencies = [
+    "pywebview>=5.0",
+    "requests>=2.31.0",
+    "urllib3>=2.0.0",
+]
+
+[project.scripts]
+ai-quota-widget = "widget:main"

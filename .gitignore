@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+venv/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.app/
+
+# User local credentials (never commit)
+.ai_quota_widget.json
