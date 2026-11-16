@@ -4,6 +4,10 @@
 
 > **코딩/파이썬 설치가 전혀 필요 없습니다!** 아래에서 본인 운영체제(Windows 또는 Mac)에 맞는 설치 파일 하나만 다운로드해 바로 실행하세요.
 
+<p align="center">
+  <img src="assets/screenshot.png" width="380" alt="토큰체커 (TokenChecker) 실행 화면" />
+</p>
+
 ---
 
 ## 📥 바로 다운로드 (최신 릴리즈)
