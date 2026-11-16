@@ -4,7 +4,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
 if [ ! -x ".venv/bin/python" ]; then
-  echo "[AI Monitor v1.0] Setting up Python virtual environment (.venv)..."
+  echo "[TokenChecker] Setting up Python virtual environment (.venv)..."
   if command -v uv >/dev/null 2>&1; then
     uv venv .venv
     uv pip install -r requirements.txt

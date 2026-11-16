@@ -15,6 +15,7 @@ venv/
 Thumbs.db
 *.app/
 *.spec
+!TokenChecker.spec
 *.dmg
 *.exe
 assets/icon.iconset/

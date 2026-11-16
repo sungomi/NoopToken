@@ -1,4 +1,4 @@
-# <img src="assets/icon.png" width="32" height="32" align="center" /> AI 모니터 v1.0 (AI Monitor v1.0)
+# <img src="assets/icon.png" width="32" height="32" align="center" /> 토큰체커 (TokenChecker)
 
 **Antigravity · Claude · Cursor · ChatGPT (Codex)** 4대 AI 코딩 에이전트의 **공식 한도(5시간 한도 / 주간 한도 / 월간 요청량)** 를 바탕화면 플로팅 위젯에서 실시간으로 확인하는 데스크톱 프로그램입니다.
 
@@ -6,31 +6,38 @@
 
 ---
 
-## 📥 바로 다운로드 (v1.0 정식 릴리즈)
+## 📥 바로 다운로드 (최신 릴리즈)
 
 | 운영체제 | 다운로드 링크 (클릭 시 바로 다운로드) | 실행 방법 |
 | :--- | :--- | :--- |
-| **🪟 Windows (PC)** | **[👉 AI-Quota-Monitor-v1.0-Windows.exe 다운로드](https://github.com/sungomi/ai-quota-widget/releases/download/v1.0/AI-Quota-Monitor-v1.0-Windows.exe)** | 다운로드한 **`.exe` 파일을 더블클릭**하면 바로 실행됩니다. |
-| **🍎 macOS (Mac)** | **[👉 AI-Quota-Monitor-v1.0-macOS.dmg 다운로드](https://github.com/sungomi/ai-quota-widget/releases/download/v1.0/AI-Quota-Monitor-v1.0-macOS.dmg)** | 다운로드한 **`.dmg` 파일을 더블클릭**해 열고 **`AI Monitor v1.0.app`** 을 실행(또는 `Applications` 폴더로 드래그)하세요. |
+| **🪟 Windows (PC)** | **[👉 TokenChecker-Windows.exe 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-Windows.exe)** | 다운로드한 **`.exe` 파일을 더블클릭**하면 바로 실행됩니다. |
+| **🍎 macOS (Mac)** | **[👉 TokenChecker-macOS.dmg 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-macOS.dmg)** | 다운로드한 **`.dmg` 파일을 더블클릭**해 열고 **`TokenChecker.app`** 을 **`Applications`** 폴더로 드래그한 뒤 실행하세요. |
 
-- 전체 릴리즈 페이지 보기: **[GitHub Releases (v1.0)](https://github.com/sungomi/ai-quota-widget/releases/tag/v1.0)**
+- 전체 릴리즈 페이지 보기: **[GitHub Releases](https://github.com/sungomi/TokenChecker/releases/latest)**
+
+---
+
+## 🔄 자동 업데이트 안내 (macOS & Windows)
+- 앱 상단 버전 배지(`vX.Y.Z`) 또는 시작 시 자동으로 GitHub 최신 릴리즈를 확인합니다.
+- 새 버전이 출시되면 위젯 상단에 업데이트 배너가 뜨며, **`자동 업데이트`** 버튼을 누르면 새 버전을 내려받아 자동으로 교체·재시작합니다.
+- 모든 인증 토큰과 설정(`~/.ai_quota_widget.json`)은 업데이트 후에도 그대로 유지됩니다.
 
 ---
 
 ## 🖥️ 처음 실행할 때 안내 (일반 사용자용)
 
 ### 1. Windows PC 사용자
-1. 위의 **[AI-Quota-Monitor-v1.0-Windows.exe 다운로드](https://github.com/sungomi/ai-quota-widget/releases/download/v1.0/AI-Quota-Monitor-v1.0-Windows.exe)** 를 눌러 파일을 받습니다.
-2. 다운로드된 `AI-Quota-Monitor-v1.0-Windows.exe`를 **더블클릭**합니다.
+1. 위의 **[TokenChecker-Windows.exe 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-Windows.exe)** 를 눌러 파일을 받습니다.
+2. 다운로드된 `TokenChecker-Windows.exe`를 **더블클릭**합니다.
 3. 만약 Windows에서 *"Windows의 PC 보호 (SmartScreen)"* 창이 뜨면 **`추가 정보(More info)` → `실행(Run anyway)`** 을 누르면 바로 실행됩니다.
-4. **업데이트 시에도 로그인 유지**: 새 버전의 `.exe`를 받아 실행해도 기존 로그인 정보(`%USERPROFILE%\.ai_quota_widget.json`)는 풀리지 않고 그대로 유지됩니다.
+4. **업데이트 시에도 로그인 유지**: 새 버전으로 업데이트해도 기존 로그인 정보(`%USERPROFILE%\.ai_quota_widget.json`)는 풀리지 않고 그대로 유지됩니다.
 
 ### 2. Mac (macOS) 사용자
-1. 위의 **[AI-Quota-Monitor-v1.0-macOS.dmg 다운로드](https://github.com/sungomi/ai-quota-widget/releases/download/v1.0/AI-Quota-Monitor-v1.0-macOS.dmg)** 를 눌러 파일을 받습니다.
-2. `AI-Quota-Monitor-v1.0-macOS.dmg`를 더블클릭해 열고, 안의 **`AI Monitor v1.0`** 아이콘을 **`Applications(응용 프로그램)`** 폴더로 끌어다 놓은 뒤 실행합니다.
-3. 최초 실행 시 *"개발자를 확인할 수 없기 때문에 열 수 없습니다"* 안내가 뜨면:
-   - 앱 아이콘을 **우클릭(Control + 클릭) → `열기(Open)`** 를 누르거나,
-   - `시스템 설정 → 개인정보 보호 및 보안` 하단에서 **`확인 없이 열기`** 를 누르면 정상 실행됩니다.
+1. 위의 **[TokenChecker-macOS.dmg 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-macOS.dmg)** 를 눌러 파일을 받습니다.
+2. `TokenChecker-macOS.dmg`를 더블클릭해 열고, 안의 **`TokenChecker`** 아이콘을 **`Applications(응용 프로그램)`** 폴더로 끌어다 놓은 뒤 실행합니다.
+3. 최초 실행 시 *"악성 코드가 없음을 확인할 수 없습니다 / 개발자를 확인할 수 없습니다"* 안내가 뜨면:
+   - `시스템 설정 → 개인정보 보호 및 보안` 하단에서 **`확인 없이 열기`** 를 누르거나,
+   - 터미널에서 `xattr -dr com.apple.quarantine "/Applications/TokenChecker.app"` 실행 후 여시면 정상 실행됩니다.
 
 ---
 

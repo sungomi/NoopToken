@@ -35,6 +35,14 @@ from providers import (
     load_config,
     save_config,
 )
+from updater import (
+    APP_EN_NAME,
+    APP_NAME,
+    APP_VERSION,
+    check_for_update,
+    get_update_status,
+    start_update,
+)
 
 OAUTH_STATE: Dict[str, Any] = {
     "agy_verifier": "",
@@ -64,7 +72,7 @@ UI_HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI Quota Monitor</title>
+<title>토큰체커 (TokenChecker)</title>
 <style>
   :root {
     --bg: #080a0f;
@@ -135,19 +143,79 @@ UI_HTML = r"""<!DOCTYPE html>
     word-break: keep-all;
   }
   .app-logo-badge {
-    width: 20px;
-    height: 20px;
+    width: 21px;
+    height: 21px;
     border-radius: 6px;
-    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    background: linear-gradient(135deg, #06b6d4 0%, #10b981 50%, #6366f1 100%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     flex-shrink: 0;
   }
   .app-logo-badge svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
+  }
+  .version-pill {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    border-radius: 99px;
+    padding: 1.5px 6px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    letter-spacing: 0;
+  }
+  .version-pill:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.48);
+  }
+  .update-banner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 8px 14px 0 14px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(56, 189, 248, 0.12));
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    font-size: 11px;
+    color: #e2e8f0;
+  }
+  .update-banner.show {
+    display: flex;
+  }
+  .update-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .update-apply-btn {
+    background: linear-gradient(135deg, #10b981, #0ea5e9);
+    color: #061018;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .update-apply-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .update-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 4px;
   }
   .live-indicator {
     position: relative;
@@ -696,14 +764,14 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="header pywebview-drag-region">
     <div class="title-area">
       <span class="app-logo-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round">
-          <line x1="4" y1="7" x2="18" y2="7" />
-          <line x1="4" y1="12" x2="14" y2="12" />
-          <line x1="4" y1="17" x2="20" y2="17" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" stroke-opacity="0.45" />
+          <path d="M8.5 12.2l2.3 2.3 4.8-5" />
         </svg>
       </span>
       <span class="live-indicator" id="pulseDot"></span>
-      <span id="appTitleText">AI 모니터 v1.0</span>
+      <span id="appTitleText">토큰체커</span>
+      <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
@@ -713,6 +781,14 @@ UI_HTML = r"""<!DOCTYPE html>
       <button class="ctrl-btn" onclick="refreshNow(true)" title="강제 새로고침">
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
       </button>
+    </div>
+  </div>
+
+  <div class="update-banner" id="updateBanner">
+    <span id="updateBannerText">새 버전이 있습니다</span>
+    <div class="update-banner-actions">
+      <button class="update-apply-btn" id="updateApplyBtn" onclick="triggerUpdate()">업데이트</button>
+      <button class="update-close-btn" onclick="dismissUpdateBanner()" title="닫기">✕</button>
     </div>
   </div>
 
@@ -749,7 +825,7 @@ UI_HTML = r"""<!DOCTYPE html>
   function updateModeHeaderUI() {
     const btn = document.getElementById("btnDisplayMode");
     const titleEl = document.getElementById("appTitleText");
-    if (titleEl) titleEl.textContent = "AI 모니터 v1.0";
+    if (titleEl) titleEl.textContent = "토큰체커";
     if (displayMode === "used") {
       if (btn) {
         btn.textContent = "사용량 기준";
@@ -1277,9 +1353,65 @@ UI_HTML = r"""<!DOCTYPE html>
     } catch (e) {}
   }
 
+  let updatePollTimer = null;
+
+  async function checkForUpdates(manual = false) {
+    try {
+      const res = await fetch(`/api/update/check${manual ? "?force=1" : ""}`);
+      const info = await res.json();
+      const banner = document.getElementById("updateBanner");
+      const textEl = document.getElementById("updateBannerText");
+      const btn = document.getElementById("updateApplyBtn");
+      if (info.update_available) {
+        if (textEl) textEl.textContent = `새 버전 v${info.latest_version} 출시`;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = info.can_auto_update ? "자동 업데이트" : "다운로드";
+        }
+        if (banner) banner.classList.add("show");
+      } else if (manual) {
+        const up = document.getElementById("updatedAt");
+        if (up) up.textContent = `최신 버전 (v${info.current_version})`;
+      }
+    } catch (e) {}
+  }
+
+  function dismissUpdateBanner() {
+    const banner = document.getElementById("updateBanner");
+    if (banner) banner.classList.remove("show");
+  }
+
+  async function triggerUpdate() {
+    const btn = document.getElementById("updateApplyBtn");
+    const textEl = document.getElementById("updateBannerText");
+    if (btn) btn.disabled = true;
+    try {
+      await fetch("/api/update/start", {method: "POST"});
+      if (updatePollTimer) clearInterval(updatePollTimer);
+      updatePollTimer = setInterval(async () => {
+        try {
+          const r = await fetch("/api/update/status");
+          const st = await r.json();
+          if (textEl && st.message) textEl.textContent = st.message;
+          if (st.state === "error" || st.state === "done") {
+            clearInterval(updatePollTimer);
+            updatePollTimer = null;
+            if (btn) btn.disabled = false;
+          }
+        } catch (e) {
+          clearInterval(updatePollTimer);
+          updatePollTimer = null;
+        }
+      }, 350);
+    } catch (e) {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   window.addEventListener("DOMContentLoaded", () => {
     updateModeHeaderUI();
     setTimeout(() => refreshNow(false), 120);
+    setTimeout(() => checkForUpdates(false), 2000);
     setInterval(() => refreshNow(false), 15000);
   });
 </script>
@@ -1569,7 +1701,7 @@ def _get_runtime_dir() -> Path:
     if platform.system() == "Windows":
         local_app = os.environ.get("LOCALAPPDATA", "")
         base = Path(local_app) if local_app else (Path.home() / "AppData/Local")
-        d = base / "AIQuotaMonitor_v1.0"
+        d = base / "TokenChecker"
         d.mkdir(parents=True, exist_ok=True)
         return d
     return Path.home()
@@ -1597,7 +1729,7 @@ def _setup_logging(cli_mode: bool = False) -> Path:
 
 
 def _cleanup_previous_instance() -> None:
-    """Terminates any previous stuck/zombie instance of AI Monitor before starting."""
+    """Terminates any previous stuck/zombie instance of TokenChecker before starting."""
     rt_dir = _get_runtime_dir()
     pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".ai_quota_widget.pid")
     my_pid = os.getpid()
@@ -1756,6 +1888,26 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"ok":true}')
             return
 
+        if parsed.path == "/api/update/check":
+            qs = urllib.parse.parse_qs(parsed.query)
+            force = bool(qs.get("force"))
+            data = json.dumps(check_for_update(force=force), ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        if parsed.path == "/api/update/status":
+            data = json.dumps(get_update_status(), ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
         if parsed.path == "/api/quotas":
             qs = urllib.parse.parse_qs(parsed.query)
             force = bool(qs.get("force"))
@@ -1828,13 +1980,21 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             threading.Timer(0.3, _close_all_popup_procs).start()
             return
 
-        body = UI_HTML.encode("utf-8")
+        body = UI_HTML.replace("__APP_VERSION__", APP_VERSION).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(body)
 
     def do_POST(self):
+        if self.path == "/api/update/start":
+            data = json.dumps(start_update(), ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
         if self.path == "/api/save_order":
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length).decode("utf-8")
@@ -1883,7 +2043,7 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
                         import ctypes
                         from ctypes import wintypes
                         user32 = ctypes.windll.user32
-                        hwnd = user32.FindWindowW(None, "AI 모니터 v1.0")
+                        hwnd = user32.FindWindowW(None, APP_NAME)
                         if hwnd:
                             rect = wintypes.RECT()
                             user32.GetWindowRect(hwnd, ctypes.byref(rect))
@@ -1902,7 +2062,7 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
                     try:
                         import ctypes
                         user32 = ctypes.windll.user32
-                        hwnd = user32.FindWindowW(None, "AI 모니터 v1.0")
+                        hwnd = user32.FindWindowW(None, APP_NAME)
                         if hwnd:
                             z_order = -1 if on_top else -2
                             user32.SetWindowPos(hwnd, z_order, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)
@@ -1933,7 +2093,7 @@ def start_background_http_server(port: int = 17890) -> int:
 
 def run_cli_summary():
     data = fetch_all_quotas(force=True)
-    print(f"\n=== AI 모니터 v1.0 ({data['updated_at']}) ===")
+    print(f"\n=== {APP_NAME} v{APP_VERSION} ({data['updated_at']}) ===")
     for p in data["providers"]:
         if not p.get("logged_in"):
             print(f"• {p['name']:16s} [미로그인] -> 위젯에서 '{p.get('login_label')}' 버튼을 눌러 로그인하세요.")
@@ -2116,7 +2276,7 @@ def main():
         return
 
     logging.info("==========================================")
-    logging.info(f"Starting AI Monitor v1.0 (PID={os.getpid()}, OS={platform.system()})")
+    logging.info(f"Starting {APP_NAME} ({APP_EN_NAME} v{APP_VERSION}, PID={os.getpid()}, OS={platform.system()})")
     _cleanup_previous_instance()
 
     if platform.system() == "Windows":
@@ -2152,7 +2312,7 @@ def main():
 
         cfg = load_config()
         window = webview.create_window(
-            title="AI 모니터 v1.0",
+            title=APP_NAME,
             url=url,
             width=440,
             height=740,
@@ -2173,8 +2333,8 @@ def main():
         except Exception:
             pass
 
-        logging.info(f"AI Monitor v1.0 window created at {url} (log: {log_path})")
-        print(f"AI Monitor v1.0 started at {url}")
+        logging.info(f"{APP_NAME} v{APP_VERSION} window created at {url} (log: {log_path})")
+        print(f"{APP_NAME} v{APP_VERSION} started at {url}")
         webview.start(debug=False)
         os._exit(0)
     except Exception as e:

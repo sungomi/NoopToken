@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_PATH="/Applications/AI Monitor v1.0.app"
+APP_PATH="/Applications/TokenChecker.app"
 
-echo "[AI Monitor v1.0] Installing macOS application bundle to $APP_PATH..."
+echo "[TokenChecker] Installing macOS application bundle to $APP_PATH..."
 mkdir -p "$APP_PATH/Contents/MacOS"
 mkdir -p "$APP_PATH/Contents/Resources"
 
@@ -21,15 +21,15 @@ cat > "$APP_PATH/Contents/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>icon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.sungomi.aimonitor</string>
+    <string>com.sungomi.tokenchecker</string>
     <key>CFBundleName</key>
-    <string>AI Monitor v1.0</string>
+    <string>TokenChecker</string>
     <key>CFBundleDisplayName</key>
-    <string>AI Monitor v1.0</string>
+    <string>토큰체커</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.1.0</string>
     <key>LSHighResolutionCapable</key>
     <true/>
 </dict>
