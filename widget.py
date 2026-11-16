@@ -570,20 +570,163 @@ UI_HTML = r"""<!DOCTYPE html>
     gap: 6px;
     min-width: 0;
   }
-  .box-title {
+  .box-title-btn {
+    background: transparent;
+    border: none;
+    padding: 2px 5px;
+    margin: -2px -5px;
+    border-radius: 6px;
     font-weight: 700;
     font-size: 12px;
     color: #f1f5f9;
     letter-spacing: -0.01em;
     white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
   }
-  .box-subtitle {
-    font-size: 10px;
+  .box-title-btn:hover {
+    background: rgba(56, 189, 248, 0.14);
+    color: #38bdf8;
+  }
+  .info-dot {
+    font-size: 10.5px;
     color: #64748b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 125px;
+    font-weight: 600;
+  }
+  .box-title-btn:hover .info-dot {
+    color: #38bdf8;
+  }
+  .provider-info-btn {
+    background: transparent;
+    border: none;
+    padding: 2px 5px;
+    margin: -2px -5px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s ease;
+  }
+  .provider-info-btn:hover {
+    background: rgba(56, 189, 248, 0.14);
+  }
+  .provider-info-btn:hover .provider-name {
+    color: #38bdf8;
+  }
+  .provider-refresh-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    font-size: 10.5px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .provider-refresh-btn:hover {
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.12);
+  }
+
+  /* Floating Info Modal */
+  .info-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 6, 10, 0.68);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 100;
+  }
+  .info-modal-backdrop.show {
+    display: flex;
+  }
+  .info-modal-card {
+    width: 100%;
+    max-width: 340px;
+    background: rgba(17, 22, 33, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .info-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .info-modal-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+  .info-modal-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: #94a3b8;
+    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .info-modal-close:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .info-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .info-modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11.5px;
+  }
+  .info-modal-label {
+    color: #94a3b8;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .info-modal-val {
+    color: #f1f5f9;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-all;
+  }
+  .info-modal-item {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font-size: 11.5px;
+    font-weight: 500;
   }
   .box-right {
     display: flex;
@@ -798,6 +941,16 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="footer">
     <span>드래그하여 순서 변경 · 클릭하여 접기/펼치기</span>
     <span id="updatedAt">동기화 중...</span>
+  </div>
+
+  <div class="info-modal-backdrop" id="infoModalBackdrop" onclick="closeInfoModal(event)">
+    <div class="info-modal-card" onclick="event.stopPropagation()">
+      <div class="info-modal-head">
+        <span class="info-modal-title" id="infoModalTitle">상세 정보</span>
+        <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+      </div>
+      <div class="info-modal-body" id="infoModalBody"></div>
+    </div>
   </div>
 
 <script>
@@ -1152,8 +1305,10 @@ UI_HTML = r"""<!DOCTYPE html>
             <div class="box-header" onpointerdown="startBoxDrag(event, '${p.id}', '${box.id}')">
               <div class="box-title-wrap">
                 <span class="drag-grip" title="드래그하여 박스 순서 이동">${getGripSvg()}</span>
-                <span class="box-title">${box.title}</span>
-                ${box.subtitle ? `<span class="box-subtitle">· ${box.subtitle}</span>` : ""}
+                <button class="box-title-btn" onpointerdown="event.stopPropagation()" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능한 모델 목록 보기">
+                  <span>${box.title}</span>
+                  ${box.subtitle ? `<span class="info-dot">ⓘ</span>` : ""}
+                </button>
               </div>
               <div class="box-right">
                 <span class="box-pct-badge" style="color:${bCol}">${boxMetric.pct}% ${boxMetric.tag}</span>
@@ -1174,8 +1329,11 @@ UI_HTML = r"""<!DOCTYPE html>
               <span class="drag-grip" title="드래그하여 계정 순서 이동">${getGripSvg()}</span>
               <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
               <div class="provider-titles">
-                <span class="provider-name">${p.name}</span>
-                <span class="badge">${p.badge || "연동됨"}</span>
+                <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
+                  <span class="provider-name">${p.name}</span>
+                </button>
+                <span class="badge">${p.plan || p.badge || "연동됨"}</span>
+                <button class="provider-refresh-btn" title="수동 새로고침" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
                 <button class="logout-btn" title="연동 해제" onpointerdown="event.stopPropagation()" onclick="logoutProvider('${p.id}', event)">✕</button>
               </div>
             </div>
@@ -1352,6 +1510,78 @@ UI_HTML = r"""<!DOCTYPE html>
       });
     } catch (e) {}
   }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function showInfoModal(title, bodyHtml) {
+    const backdrop = document.getElementById("infoModalBackdrop");
+    const titleEl = document.getElementById("infoModalTitle");
+    const bodyEl = document.getElementById("infoModalBody");
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.innerHTML = bodyHtml;
+    if (backdrop) backdrop.classList.add("show");
+  }
+
+  function closeInfoModal(e) {
+    if (e && e.target && e.target.id !== "infoModalBackdrop") return;
+    const backdrop = document.getElementById("infoModalBackdrop");
+    if (backdrop) backdrop.classList.remove("show");
+  }
+
+  function openBoxModelsModal(providerId, boxId, e) {
+    if (e) e.stopPropagation();
+    if (!lastData || !lastData.providers) return;
+    const p = lastData.providers.find(x => x.id === providerId);
+    if (!p) return;
+    const box = (p.boxes || []).find(b => b.id === boxId);
+    if (!box) return;
+    const raw = (box.subtitle || "").trim();
+    const items = raw
+      ? raw.split(/[,·/]+/).map(s => s.trim()).filter(Boolean)
+      : [(box.title || "모델 정보 없음")];
+    const html = items.map(m => `<div class="info-modal-item">• ${escapeHtml(m)}</div>`).join("");
+    showInfoModal(`${box.title} — 사용 가능 모델`, html);
+  }
+
+  function openProviderInfoModal(providerId, e) {
+    if (e) e.stopPropagation();
+    if (!lastData || !lastData.providers) return;
+    const p = lastData.providers.find(x => x.id === providerId);
+    if (!p) return;
+    const plan = p.plan || p.badge || "연동됨";
+    const account = p.account || "연동된 계정 정보 없음";
+    const resetTxt = p.reset_text || "실시간 연동";
+    const html = `
+      <div class="info-modal-row">
+        <span class="info-modal-label">로그인 계정</span>
+        <span class="info-modal-val">${escapeHtml(account)}</span>
+      </div>
+      <div class="info-modal-row">
+        <span class="info-modal-label">플랜</span>
+        <span class="info-modal-val">${escapeHtml(plan)}</span>
+      </div>
+      <div class="info-modal-row">
+        <span class="info-modal-label">갱신 / 리셋</span>
+        <span class="info-modal-val">${escapeHtml(resetTxt)}</span>
+      </div>
+    `;
+    showInfoModal(`${p.name} 계정 정보`, html);
+  }
+
+  async function refreshProvider(providerId, e) {
+    if (e) e.stopPropagation();
+    await refreshNow(true);
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeInfoModal();
+  });
 
   let updatePollTimer = null;
 

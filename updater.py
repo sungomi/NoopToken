@@ -14,7 +14,7 @@ import requests
 
 APP_NAME = "토큰체커"
 APP_EN_NAME = "TokenChecker"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 GITHUB_REPO = "sungomi/TokenChecker"
 
 _CACHE_LOCK = threading.Lock()

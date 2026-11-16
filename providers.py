@@ -433,13 +433,35 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
             })
 
     if boxes:
+        plan_name = cfg.get("auth", {}).get("antigravity", {}).get("plan", "")
+        if not plan_name and token:
+            try:
+                r_tier = requests.post(
+                    f"{base_url}/v1internal:loadCodeAssist",
+                    headers=headers,
+                    json={"metadata": {"ideType": "ANTIGRAVITY"}},
+                    timeout=2.5,
+                )
+                if r_tier.status_code == 200:
+                    td = r_tier.json()
+                    tier_obj = td.get("paidTier") or td.get("currentTier") or {}
+                    plan_name = (tier_obj.get("name") or tier_obj.get("id") or "").strip()
+                    if plan_name:
+                        save_config({"auth": {"antigravity": {"plan": plan_name}}})
+            except Exception:
+                pass
+        if not plan_name:
+            plan_name = "Google AI"
+
         primary_rem = min(b["remaining_pct"] for b in boxes)
         total_bars = sum(len(b.get("bars", [])) for b in boxes)
         res = {
             "id": "antigravity",
             "name": "Antigravity",
             "logged_in": True,
-            "badge": email or "Google 연동됨",
+            "badge": plan_name,
+            "plan": plan_name,
+            "account": email or "Google OAuth",
             "remaining_pct": primary_rem,
             "reset_text": _format_reset_countdown(earliest_reset) or "실시간 연동",
             "headline": f"대표 모델 {len(boxes)}개 그룹 ({total_bars}개 바)",
@@ -644,11 +666,14 @@ def fetch_claude_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, An
                     "bars": bars,
                 }
             ]
+            claude_acc = c_auth.get("email") or ("Anthropic OAuth" if oauth_token else "세션 키 연동")
             res = {
                 "id": "claude",
                 "name": "Claude",
                 "logged_in": True,
                 "badge": badge,
+                "plan": badge,
+                "account": claude_acc,
                 "remaining_pct": primary_rem,
                 "reset_text": bars[0].get("reset_text", "자동 갱신"),
                 "headline": f"주간/5시간 한도 연동됨",
@@ -759,6 +784,8 @@ def fetch_cursor_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, An
                         "name": "Cursor",
                         "logged_in": True,
                         "badge": "Cursor Pro",
+                        "plan": "Cursor Pro",
+                        "account": cfg.get("auth", {}).get("cursor", {}).get("email") or "Cursor 세션 연동",
                         "remaining_pct": primary_rem,
                         "reset_text": r_txt,
                         "headline": f"Fast Requests {primary_rem}% 남음",
@@ -897,11 +924,15 @@ def fetch_codex_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, Any
                             "bars": bars,
                         }
                     ]
+                    codex_plan = (data.get("plan_type") or "Codex OAuth").upper()
+                    codex_acc = cfg.get("auth", {}).get("codex", {}).get("email") or "OpenAI OAuth"
                     res = {
                         "id": "codex",
                         "name": "ChatGPT / Codex",
                         "logged_in": True,
-                        "badge": (data.get("plan_type") or "Codex OAuth").upper(),
+                        "badge": codex_plan,
+                        "plan": codex_plan,
+                        "account": codex_acc,
                         "remaining_pct": primary_rem,
                         "reset_text": bars[0].get("reset_text", "자동 갱신"),
                         "headline": f"최저 {primary_rem}% 남음",
