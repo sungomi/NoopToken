@@ -327,13 +327,21 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
         except Exception:
             pass
 
+        def _base_model_name(name: str) -> str:
+            return re.sub(
+                r"\s*\((?:High|Medium|Low)(?:\s*/\s*(?:High|Medium|Low))*\)\s*$",
+                "",
+                name.strip(),
+                flags=re.IGNORECASE,
+            ).strip()
+
         google_models: List[str] = []
         other_models: List[str] = []
         argon_models: List[str] = []
         for mid, mobj in models_map.items():
             if not isinstance(mobj, dict) or mobj.get("isInternal"):
                 continue
-            dname = (mobj.get("displayName") or "").strip()
+            dname = _base_model_name(mobj.get("displayName") or "")
             if not dname:
                 continue
             prov = (mobj.get("modelProvider") or "").upper()
@@ -456,11 +464,7 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
                     "detail": f"{argon_weekly_pct}%",
                 },
             ]
-            argon_list = argon_models or [
-                "Gemini 4 Argon (High)",
-                "Gemini 4 Argon (Medium)",
-                "Gemini 4 Argon (Low)",
-            ]
+            argon_list = argon_models or ["Gemini 4 Argon"]
             boxes.append({
                 "id": "agy_box_argon",
                 "title": "Gemini 4 Argon",
