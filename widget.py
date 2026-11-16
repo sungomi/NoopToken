@@ -72,7 +72,7 @@ UI_HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>토큰체커 (TokenChecker)</title>
+<title>TokenChecker</title>
 <style>
   :root {
     --bg: #080a0f;
@@ -923,7 +923,7 @@ UI_HTML = r"""<!DOCTYPE html>
         </svg>
       </span>
       <span class="live-indicator" id="pulseDot"></span>
-      <span id="appTitleText">토큰체커</span>
+      <span id="appTitleText">TokenChecker</span>
       <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
     </div>
     <div class="controls">
@@ -988,7 +988,7 @@ UI_HTML = r"""<!DOCTYPE html>
   function updateModeHeaderUI() {
     const btn = document.getElementById("btnDisplayMode");
     const titleEl = document.getElementById("appTitleText");
-    if (titleEl) titleEl.textContent = "토큰체커";
+    if (titleEl) titleEl.textContent = "TokenChecker";
     if (displayMode === "used") {
       if (btn) {
         btn.textContent = "사용량 기준";

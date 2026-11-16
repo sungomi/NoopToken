@@ -25,7 +25,7 @@ cat > "$APP_PATH/Contents/Info.plist" <<EOF
     <key>CFBundleName</key>
     <string>TokenChecker</string>
     <key>CFBundleDisplayName</key>
-    <string>토큰체커</string>
+    <string>TokenChecker</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

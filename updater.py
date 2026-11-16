@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 import requests
 
-APP_NAME = "토큰체커"
+APP_NAME = "TokenChecker"
 APP_EN_NAME = "TokenChecker"
 APP_VERSION = "1.2.0"
 GITHUB_REPO = "sungomi/TokenChecker"
