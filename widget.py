@@ -119,8 +119,8 @@ UI_HTML = r"""<!DOCTYPE html>
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 11px 14px 9px 14px;
+    gap: 12px;
+    padding: 12px 16px 10px 16px;
     background: rgba(8, 10, 15, 0.86);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     position: sticky;
@@ -133,9 +133,9 @@ UI_HTML = r"""<!DOCTYPE html>
   .title-area {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 13.5px;
     letter-spacing: -0.02em;
     color: #f1f5f9;
     white-space: nowrap;
@@ -924,7 +924,6 @@ UI_HTML = r"""<!DOCTYPE html>
       </span>
       <span class="live-indicator" id="pulseDot"></span>
       <span id="appTitleText">TokenChecker</span>
-      <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
@@ -949,7 +948,10 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="cards" id="cardsContainer"></div>
 
   <div class="footer">
-    <span>드래그하여 순서 변경 · 클릭하여 접기/펼치기</span>
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
+      <span>드래그하여 순서 변경</span>
+    </span>
     <span id="updatedAt">동기화 중...</span>
   </div>
 
@@ -2563,7 +2565,7 @@ def main():
         window = webview.create_window(
             title=APP_NAME,
             url=url,
-            width=440,
+            width=468,
             height=740,
             x=40,
             y=60,
