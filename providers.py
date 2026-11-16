@@ -337,7 +337,6 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
 
         google_models: List[str] = []
         other_models: List[str] = []
-        argon_models: List[str] = []
         for mid, mobj in models_map.items():
             if not isinstance(mobj, dict) or mobj.get("isInternal"):
                 continue
@@ -345,10 +344,7 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
             if not dname:
                 continue
             prov = (mobj.get("modelProvider") or "").upper()
-            if "argon" in mid.lower() or "argon" in dname.lower():
-                if dname not in argon_models:
-                    argon_models.append(dname)
-            elif "GOOGLE" in prov or mid.lower().startswith("gemini"):
+            if "GOOGLE" in prov or mid.lower().startswith("gemini"):
                 if dname not in google_models:
                     google_models.append(dname)
             else:
@@ -429,50 +425,6 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
                         })
         except Exception:
             pass
-
-        if len(boxes) == 2 and not any("argon" in b["title"].lower() for b in boxes):
-            argon_5h_pct = 100.0
-            argon_5h_reset = ""
-            # Find the weekly bar from Gemini Models (boxes[0])
-            weekly_bar_0 = next((b for b in boxes[0].get("bars", []) if "주간" in b["name"]), None)
-            five_h_bar_0 = next((b for b in boxes[0].get("bars", []) if "5시간" in b["name"]), None)
-            argon_weekly_pct = weekly_bar_0["remaining_pct"] if weekly_bar_0 else 100.0
-            argon_weekly_reset = weekly_bar_0.get("reset_text", "") if weekly_bar_0 else ""
-            if five_h_bar_0:
-                argon_5h_reset = five_h_bar_0.get("reset_text", "")
-
-            for mk in ["gemini-4-argon-high", "gemini-4-argon-medium", "gemini-4-argon-low", "gemini-2.5-pro", "gemini-3.8-flash-high"]:
-                if mk in models_map:
-                    qi = models_map[mk].get("quotaInfo") or {}
-                    if "remainingFraction" in qi:
-                        argon_5h_pct = round(float(qi["remainingFraction"]) * 100.0, 1)
-                        argon_5h_reset = _format_reset_countdown(_parse_iso(qi.get("resetTime")))
-                        break
-
-            # 5시간 한도 (top) -> 주간 한도 (bottom)
-            argon_bars = [
-                {
-                    "name": "5시간 한도 (5h)",
-                    "remaining_pct": argon_5h_pct,
-                    "reset_text": argon_5h_reset or "정상",
-                    "detail": f"{argon_5h_pct}%",
-                },
-                {
-                    "name": "주간 한도 (Weekly)",
-                    "remaining_pct": argon_weekly_pct,
-                    "reset_text": argon_weekly_reset or "정상",
-                    "detail": f"{argon_weekly_pct}%",
-                },
-            ]
-            argon_list = argon_models or ["Gemini 4 Argon"]
-            boxes.append({
-                "id": "agy_box_argon",
-                "title": "Gemini 4 Argon",
-                "subtitle": ", ".join(argon_list),
-                "models": argon_list,
-                "remaining_pct": min(argon_weekly_pct, argon_5h_pct),
-                "bars": argon_bars,
-            })
 
     if boxes:
         plan_name = cfg.get("auth", {}).get("antigravity", {}).get("plan", "")
