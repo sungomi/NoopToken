@@ -259,6 +259,12 @@ UI_HTML = r"""<!DOCTYPE html>
     background: rgba(255, 255, 255, 0.09);
     border-color: rgba(255, 255, 255, 0.16);
   }
+  .ctrl-btn:disabled {
+    opacity: 0.65;
+    cursor: default;
+    color: #38bdf8;
+    min-width: 28px;
+  }
   .ctrl-btn.active {
     color: #38bdf8;
     border-color: rgba(56, 189, 248, 0.4);
@@ -636,6 +642,13 @@ UI_HTML = r"""<!DOCTYPE html>
     border-color: rgba(56, 189, 248, 0.45);
     background: rgba(56, 189, 248, 0.12);
   }
+  .provider-refresh-btn:disabled {
+    opacity: 0.7;
+    cursor: default;
+    color: #38bdf8;
+    font-size: 9.5px;
+    font-weight: 700;
+  }
 
   /* Floating Info Modal */
   .info-modal-backdrop {
@@ -930,7 +943,7 @@ UI_HTML = r"""<!DOCTYPE html>
       <button class="ctrl-btn" onclick="toggleAllBoxes()" title="모든 계정/박스 접기·펼치기">접기</button>
       <button class="ctrl-btn" id="btnCompact" onclick="toggleCompact()" title="상단 미니바 모드로 축소">미니바</button>
       <button class="ctrl-btn active" id="btnPin" onclick="togglePin()" title="항상 위에 고정">고정</button>
-      <button class="ctrl-btn" onclick="refreshNow(true)" title="강제 새로고침">
+      <button class="ctrl-btn" id="btnGlobalRefresh" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
       </button>
     </div>
@@ -1105,9 +1118,13 @@ UI_HTML = r"""<!DOCTYPE html>
     render(lastData);
   }
 
-  async function fetchData(force = false) {
+  async function fetchData(force = false, providerId = "") {
     try {
-      const r = await fetch("/api/quotas" + (force ? "?force=1" : ""));
+      let qs = "";
+      if (force) {
+        qs = providerId ? `?force=1&provider=${encodeURIComponent(providerId)}` : "?force=1";
+      }
+      const r = await fetch("/api/quotas" + qs);
       return await r.json();
     } catch (e) {
       return null;
@@ -1345,7 +1362,7 @@ UI_HTML = r"""<!DOCTYPE html>
                   <span class="provider-name">${p.name}</span>
                 </button>
                 <span class="badge">${p.plan || p.badge || "연동됨"}</span>
-                <button class="provider-refresh-btn" title="수동 새로고침" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
+                <button class="provider-refresh-btn" data-refresh-provider="${p.id}" title="수동 새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
                 <button class="logout-btn" title="연동 해제" onpointerdown="event.stopPropagation()" onclick="logoutProvider('${p.id}', event)">✕</button>
               </div>
             </div>
@@ -1370,6 +1387,7 @@ UI_HTML = r"""<!DOCTYPE html>
       const el = document.getElementById("input_" + id);
       if (el) el.value = savedInputs[id];
     });
+    applyCooldownUI();
   }
 
   // =========================================================================
@@ -1484,14 +1502,14 @@ UI_HTML = r"""<!DOCTYPE html>
     window.addEventListener("pointerup", onUp);
   }
 
-  async function refreshNow(force = false) {
+  async function refreshNow(force = false, providerId = "") {
     if (isDragging) return;
     if (document.activeElement && document.activeElement.tagName === "INPUT") {
       return;
     }
     const dot = document.getElementById("pulseDot");
     dot.style.background = "#38bdf8";
-    const data = await fetchData(force);
+    const data = await fetchData(force, providerId);
     if (data) render(data);
     setTimeout(() => { dot.style.background = "#10b981"; }, 300);
   }
@@ -1595,9 +1613,69 @@ UI_HTML = r"""<!DOCTYPE html>
     showInfoModal(`${p.name} 계정 정보`, html);
   }
 
+  const GLOBAL_REFRESH_SVG = '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>';
+  let globalCooldownEnd = 0;
+  let providerCooldownEnd = {};
+  let cooldownTickTimer = null;
+
+  function applyCooldownUI() {
+    const now = Date.now();
+    let anyActive = false;
+
+    const gBtn = document.getElementById("btnGlobalRefresh");
+    if (gBtn) {
+      const remMs = globalCooldownEnd - now;
+      if (remMs > 0) {
+        anyActive = true;
+        const sec = Math.ceil(remMs / 1000);
+        gBtn.disabled = true;
+        gBtn.textContent = `${sec}`;
+      } else {
+        gBtn.disabled = false;
+        gBtn.innerHTML = GLOBAL_REFRESH_SVG;
+      }
+    }
+
+    document.querySelectorAll(".provider-refresh-btn[data-refresh-provider]").forEach(btn => {
+      const pid = btn.getAttribute("data-refresh-provider");
+      const remMs = (providerCooldownEnd[pid] || 0) - now;
+      if (remMs > 0) {
+        anyActive = true;
+        const sec = Math.ceil(remMs / 1000);
+        btn.disabled = true;
+        btn.textContent = `${sec}`;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "↻";
+      }
+    });
+
+    if (!anyActive && cooldownTickTimer) {
+      clearInterval(cooldownTickTimer);
+      cooldownTickTimer = null;
+    }
+  }
+
+  function ensureCooldownTick() {
+    applyCooldownUI();
+    if (!cooldownTickTimer) {
+      cooldownTickTimer = setInterval(applyCooldownUI, 200);
+    }
+  }
+
+  async function manualGlobalRefresh() {
+    if (Date.now() < globalCooldownEnd) return;
+    globalCooldownEnd = Date.now() + 5000;
+    ensureCooldownTick();
+    await refreshNow(true);
+  }
+
   async function refreshProvider(providerId, e) {
     if (e) e.stopPropagation();
-    await refreshNow(true);
+    if (Date.now() < (providerCooldownEnd[providerId] || 0)) return;
+    providerCooldownEnd[providerId] = Date.now() + 5000;
+    ensureCooldownTick();
+    await refreshNow(true, providerId);
   }
 
   window.addEventListener("keydown", (e) => {
@@ -2162,7 +2240,8 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/quotas":
             qs = urllib.parse.parse_qs(parsed.query)
             force = bool(qs.get("force"))
-            data = json.dumps(fetch_all_quotas(force=force), ensure_ascii=False).encode("utf-8")
+            provider = (qs.get("provider") or [""])[0]
+            data = json.dumps(fetch_all_quotas(force=force, force_provider=provider), ensure_ascii=False).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")

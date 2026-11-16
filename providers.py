@@ -952,13 +952,14 @@ def fetch_codex_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, Any
     }
 
 
-def fetch_all_quotas(force: bool = False) -> Dict[str, Any]:
+def fetch_all_quotas(force: bool = False, force_provider: str = "") -> Dict[str, Any]:
     cfg = load_config()
+    fp = (force_provider or "").strip().lower()
     raw_map = {
-        "antigravity": fetch_antigravity_usage(cfg, force=force),
-        "claude": fetch_claude_usage(cfg, force=force),
-        "cursor": fetch_cursor_usage(cfg, force=force),
-        "codex": fetch_codex_usage(cfg, force=force),
+        "antigravity": fetch_antigravity_usage(cfg, force=(force and (not fp or fp == "antigravity"))),
+        "claude": fetch_claude_usage(cfg, force=(force and (not fp or fp == "claude"))),
+        "cursor": fetch_cursor_usage(cfg, force=(force and (not fp or fp == "cursor"))),
+        "codex": fetch_codex_usage(cfg, force=(force and (not fp or fp == "codex"))),
     }
 
     # Apply saved card order
