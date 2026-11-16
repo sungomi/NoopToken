@@ -420,6 +420,7 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
                             "title": g_name,
                             "subtitle": ", ".join(box_models) if box_models else g_desc,
                             "models": box_models,
+                            "note": "Google 외부 OAuth API가 제공하는 모델만 표시됩니다. (Gemini 4 Argon / Hydrogen 등 IDE 내부 모델은 API에서 제공되지 않음)",
                             "remaining_pct": box_min,
                             "bars": bars[:2],
                         })
@@ -456,6 +457,7 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
             "badge": plan_name,
             "plan": plan_name,
             "account": email or "Google OAuth",
+            "note": "Google 외부 OAuth API 기준 사용량만 표시됩니다. (Gemini 4 Argon / Hydrogen 등 IDE 내부 모델은 API 미제공)",
             "remaining_pct": primary_rem,
             "reset_text": _format_reset_countdown(earliest_reset) or "실시간 연동",
             "headline": f"대표 모델 {len(boxes)}개 그룹 ({total_bars}개 바)",

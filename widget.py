@@ -728,6 +728,16 @@ UI_HTML = r"""<!DOCTYPE html>
     font-size: 11.5px;
     font-weight: 500;
   }
+  .info-modal-note {
+    margin-top: 4px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    color: #94a3b8;
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
   .box-right {
     display: flex;
     align-items: center;
@@ -1548,7 +1558,10 @@ UI_HTML = r"""<!DOCTYPE html>
         ? raw.split(/[,·]+/).map(s => s.trim()).filter(Boolean)
         : [(box.title || "모델 정보 없음")];
     }
-    const html = items.map(m => `<div class="info-modal-item">• ${escapeHtml(m)}</div>`).join("");
+    let html = items.map(m => `<div class="info-modal-item">• ${escapeHtml(m)}</div>`).join("");
+    if (box.note) {
+      html += `<div class="info-modal-note">${escapeHtml(box.note)}</div>`;
+    }
     showInfoModal(`${box.title} — 사용 가능 모델`, html);
   }
 
@@ -1560,7 +1573,7 @@ UI_HTML = r"""<!DOCTYPE html>
     const plan = p.plan || p.badge || "연동됨";
     const account = p.account || "연동된 계정 정보 없음";
     const resetTxt = p.reset_text || "실시간 연동";
-    const html = `
+    let html = `
       <div class="info-modal-row">
         <span class="info-modal-label">로그인 계정</span>
         <span class="info-modal-val">${escapeHtml(account)}</span>
@@ -1574,6 +1587,9 @@ UI_HTML = r"""<!DOCTYPE html>
         <span class="info-modal-val">${escapeHtml(resetTxt)}</span>
       </div>
     `;
+    if (p.note) {
+      html += `<div class="info-modal-note">${escapeHtml(p.note)}</div>`;
+    }
     showInfoModal(`${p.name} 계정 정보`, html);
   }
 
