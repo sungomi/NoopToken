@@ -1541,10 +1541,13 @@ UI_HTML = r"""<!DOCTYPE html>
     if (!p) return;
     const box = (p.boxes || []).find(b => b.id === boxId);
     if (!box) return;
-    const raw = (box.subtitle || "").trim();
-    const items = raw
-      ? raw.split(/[,·/]+/).map(s => s.trim()).filter(Boolean)
-      : [(box.title || "모델 정보 없음")];
+    let items = Array.isArray(box.models) && box.models.length ? box.models : [];
+    if (!items.length) {
+      const raw = (box.subtitle || "").trim();
+      items = raw
+        ? raw.split(/[,·]+/).map(s => s.trim()).filter(Boolean)
+        : [(box.title || "모델 정보 없음")];
+    }
     const html = items.map(m => `<div class="info-modal-item">• ${escapeHtml(m)}</div>`).join("");
     showInfoModal(`${box.title} — 사용 가능 모델`, html);
   }

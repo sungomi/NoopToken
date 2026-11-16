@@ -314,6 +314,39 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
         }
         base_url = "https://daily-cloudcode-pa.googleapis.com"
 
+        models_map: Dict[str, Any] = {}
+        try:
+            r_mod = requests.post(
+                f"{base_url}/v1internal:fetchAvailableModels",
+                headers=headers,
+                json={},
+                timeout=3.5,
+            )
+            if r_mod.status_code == 200:
+                models_map = r_mod.json().get("models") or {}
+        except Exception:
+            pass
+
+        google_models: List[str] = []
+        other_models: List[str] = []
+        argon_models: List[str] = []
+        for mid, mobj in models_map.items():
+            if not isinstance(mobj, dict) or mobj.get("isInternal"):
+                continue
+            dname = (mobj.get("displayName") or "").strip()
+            if not dname:
+                continue
+            prov = (mobj.get("modelProvider") or "").upper()
+            if "argon" in mid.lower() or "argon" in dname.lower():
+                if dname not in argon_models:
+                    argon_models.append(dname)
+            elif "GOOGLE" in prov or mid.lower().startswith("gemini"):
+                if dname not in google_models:
+                    google_models.append(dname)
+            else:
+                if dname not in other_models:
+                    other_models.append(dname)
+
         try:
             r_sum = requests.post(
                 f"{base_url}/v1internal:retrieveUserQuotaSummary",
@@ -369,10 +402,20 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
                         # Sort so 5-Hour Limit (5h) is on TOP (first) and Weekly Limit is on BOTTOM (second)
                         bars.sort(key=lambda x: 0 if "5시간" in x["name"] or "5h" in x["name"].lower() else 1)
                         box_min = min(bar["remaining_pct"] for bar in bars)
+                        title_lower = g_name.lower()
+                        desc_models = [s.strip() for s in g_desc.split(",") if s.strip()] if g_desc else []
+                        if "gemini" in title_lower and "argon" not in title_lower:
+                            box_models = list(dict.fromkeys(google_models + desc_models))
+                        elif "claude" in title_lower or "gpt" in title_lower:
+                            box_models = list(dict.fromkeys(other_models + desc_models))
+                        else:
+                            box_models = desc_models
+
                         boxes.append({
                             "id": f"agy_box_{idx}",
                             "title": g_name,
-                            "subtitle": g_desc,
+                            "subtitle": ", ".join(box_models) if box_models else g_desc,
+                            "models": box_models,
                             "remaining_pct": box_min,
                             "bars": bars[:2],
                         })
@@ -390,24 +433,13 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
             if five_h_bar_0:
                 argon_5h_reset = five_h_bar_0.get("reset_text", "")
 
-            try:
-                r_mod = requests.post(
-                    f"{base_url}/v1internal:fetchAvailableModels",
-                    headers=headers,
-                    json={},
-                    timeout=3.5,
-                )
-                if r_mod.status_code == 200:
-                    models_map = r_mod.json().get("models") or {}
-                    for mk in ["gemini-4-argon-high", "gemini-4-argon-medium", "gemini-4-argon-low", "gemini-2.5-pro", "gemini-3.8-flash-high"]:
-                        if mk in models_map:
-                            qi = models_map[mk].get("quotaInfo") or {}
-                            if "remainingFraction" in qi:
-                                argon_5h_pct = round(float(qi["remainingFraction"]) * 100.0, 1)
-                                argon_5h_reset = _format_reset_countdown(_parse_iso(qi.get("resetTime")))
-                                break
-            except Exception:
-                pass
+            for mk in ["gemini-4-argon-high", "gemini-4-argon-medium", "gemini-4-argon-low", "gemini-2.5-pro", "gemini-3.8-flash-high"]:
+                if mk in models_map:
+                    qi = models_map[mk].get("quotaInfo") or {}
+                    if "remainingFraction" in qi:
+                        argon_5h_pct = round(float(qi["remainingFraction"]) * 100.0, 1)
+                        argon_5h_reset = _format_reset_countdown(_parse_iso(qi.get("resetTime")))
+                        break
 
             # 5시간 한도 (top) -> 주간 한도 (bottom)
             argon_bars = [
@@ -424,10 +456,16 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
                     "detail": f"{argon_weekly_pct}%",
                 },
             ]
+            argon_list = argon_models or [
+                "Gemini 4 Argon (High)",
+                "Gemini 4 Argon (Medium)",
+                "Gemini 4 Argon (Low)",
+            ]
             boxes.append({
                 "id": "agy_box_argon",
                 "title": "Gemini 4 Argon",
-                "subtitle": "Gemini 4 Argon (High / Medium / Low)",
+                "subtitle": ", ".join(argon_list),
+                "models": argon_list,
                 "remaining_pct": min(argon_weekly_pct, argon_5h_pct),
                 "bars": argon_bars,
             })
