@@ -12,7 +12,13 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-CONFIG_PATH = Path.home() / ".ai_quota_widget.json"
+CONFIG_PATH = Path.home() / ".tokenchecker.json"
+_LEGACY_CONFIG_PATH = Path.home() / ".ai_quota_widget.json"
+if not CONFIG_PATH.exists() and _LEGACY_CONFIG_PATH.exists():
+    try:
+        CONFIG_PATH.write_text(_LEGACY_CONFIG_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    except Exception:
+        pass
 
 # 1. Antigravity Official OAuth Scopes (Client ID/Secret discovered from local Antigravity installation or config)
 AGY_SCOPES = [

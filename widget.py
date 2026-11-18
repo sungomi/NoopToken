@@ -1842,7 +1842,7 @@ def _open_floating_chrome_popup(url: str, isolated_closeable: bool = True):
         if os.path.exists(b):
             try:
                 if isolated_closeable:
-                    tmp_dir = tempfile.mkdtemp(prefix="ai_quota_login_")
+                    tmp_dir = tempfile.mkdtemp(prefix="tokenchecker_login_")
                     proc = subprocess.Popen(
                         [
                             b,
@@ -2039,7 +2039,7 @@ def _get_runtime_dir() -> Path:
 
 def _setup_logging(cli_mode: bool = False) -> Path:
     rt_dir = _get_runtime_dir()
-    log_path = rt_dir / ("widget.log" if platform.system() == "Windows" else ".ai_quota_widget.log")
+    log_path = rt_dir / ("widget.log" if platform.system() == "Windows" else ".tokenchecker.log")
     try:
         if not cli_mode:
             log_file = open(log_path, "a", encoding="utf-8", buffering=1)
@@ -2061,7 +2061,7 @@ def _setup_logging(cli_mode: bool = False) -> Path:
 def _cleanup_previous_instance() -> None:
     """Terminates any previous stuck/zombie instance of TokenChecker before starting."""
     rt_dir = _get_runtime_dir()
-    pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".ai_quota_widget.pid")
+    pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".tokenchecker.pid")
     my_pid = os.getpid()
 
     if pid_path.exists():

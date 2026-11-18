@@ -21,4 +21,5 @@ Thumbs.db
 assets/icon.iconset/
 
 # User local credentials (never commit)
+.tokenchecker.json
 .ai_quota_widget.json

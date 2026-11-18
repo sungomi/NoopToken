@@ -24,7 +24,7 @@
 ## 🔄 자동 업데이트 안내 (macOS & Windows)
 - 앱 상단 버전 배지(`vX.Y.Z`) 또는 시작 시 자동으로 GitHub 최신 릴리즈를 확인합니다.
 - 새 버전이 출시되면 위젯 상단에 업데이트 배너가 뜨며, **`자동 업데이트`** 버튼을 누르면 새 버전을 내려받아 자동으로 교체·재시작합니다.
-- 모든 인증 토큰과 설정(`~/.ai_quota_widget.json`)은 업데이트 후에도 그대로 유지됩니다.
+- 모든 인증 토큰과 설정(`~/.tokenchecker.json`)은 업데이트 후에도 그대로 유지됩니다.
 
 ---
 
@@ -34,7 +34,7 @@
 1. 위의 **[TokenChecker-Windows.exe 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-Windows.exe)** 를 눌러 파일을 받습니다.
 2. 다운로드된 `TokenChecker-Windows.exe`를 **더블클릭**합니다.
 3. 만약 Windows에서 *"Windows의 PC 보호 (SmartScreen)"* 창이 뜨면 **`추가 정보(More info)` → `실행(Run anyway)`** 을 누르면 바로 실행됩니다.
-4. **업데이트 시에도 로그인 유지**: 새 버전으로 업데이트해도 기존 로그인 정보(`%USERPROFILE%\.ai_quota_widget.json`)는 풀리지 않고 그대로 유지됩니다.
+4. **업데이트 시에도 로그인 유지**: 새 버전으로 업데이트해도 기존 로그인 정보(`%USERPROFILE%\.tokenchecker.json`)는 풀리지 않고 그대로 유지됩니다.
 
 ### 2. Mac (macOS) 사용자
 1. 위의 **[TokenChecker-macOS.dmg 다운로드](https://github.com/sungomi/TokenChecker/releases/latest/download/TokenChecker-macOS.dmg)** 를 눌러 파일을 받습니다.
@@ -59,7 +59,7 @@
 4. **마우스 드래그 앤 드롭 순서 변경 (`⋮⋮`) & 접기/펼치기 (`▾`)**
    - 각 에이전트 카드 순서와 내부 모델 박스 순서를 마우스로 직접 끌어 배치하고, 클릭해 접거나 펼칠 수 있습니다.
 5. **업데이트 시에도 로그인 영구 유지**
-   - 모든 인증 토큰과 설정은 사용자 홈 폴더(`~/.ai_quota_widget.json`)에 별도 보관되어, 앱을 업데이트하거나 재설치해도 로그인이 풀리지 않습니다.
+   - 모든 인증 토큰과 설정은 사용자 홈 폴더(`~/.tokenchecker.json`)에 별도 보관되어, 앱을 업데이트하거나 재설치해도 로그인이 풀리지 않습니다.
 
 ## 다운로드한 파일 확인하기 (선택)
 
