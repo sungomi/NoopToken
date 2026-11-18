@@ -60,3 +60,28 @@
    - 각 에이전트 카드 순서와 내부 모델 박스 순서를 마우스로 직접 끌어 배치하고, 클릭해 접거나 펼칠 수 있습니다.
 5. **업데이트 시에도 로그인 영구 유지**
    - 모든 인증 토큰과 설정은 사용자 홈 폴더(`~/.ai_quota_widget.json`)에 별도 보관되어, 앱을 업데이트하거나 재설치해도 로그인이 풀리지 않습니다.
+
+## 다운로드한 파일 확인하기 (선택)
+
+릴리스마다 `SHA256SUMS`(파일 지문표)와 `SHA256SUMS.sig`(sungomi의 서명)가 함께 올라갑니다.
+받은 파일의 지문을 아래 명령으로 확인하고, `SHA256SUMS`에 적힌 값과 같으면 원본 그대로입니다.
+
+- Mac: `shasum -a 256 받은파일이름`
+- Windows (명령 프롬프트): `certutil -hashfile 받은파일이름 SHA256`
+
+서명까지 확인하려면 (Mac/Linux):
+
+```bash
+echo "353765157+sungomi@users.noreply.github.com $(curl -s https://api.github.com/users/sungomi/ssh_signing_keys | python3 -c "import sys,json;print(json.load(sys.stdin)[0][\"key\"])")" > sungomi_signers
+ssh-keygen -Y verify -f sungomi_signers -I 353765157+sungomi@users.noreply.github.com -n file -s SHA256SUMS.sig < SHA256SUMS
+```
+
+`Good "file" signature`가 나오면 sungomi가 서명한 지문표입니다.
+
+---
+
+## 제작자
+
+**sungomi** · [github.com/sungomi](https://github.com/sungomi)
+
+라이선스: [MIT License](LICENSE)
