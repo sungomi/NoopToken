@@ -1,0 +1,70 @@
+name: Build & Release TokenChecker
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+      - name: Build TokenChecker.app & DMG
+        run: |
+          pyinstaller --noconfirm --clean TokenChecker.spec
+          mkdir -p dist/dmg_root
+          cp -R "dist/TokenChecker.app" dist/dmg_root/
+          ln -s /Applications dist/dmg_root/Applications
+          hdiutil create -volname "TokenChecker" -srcfolder dist/dmg_root -ov -format UDZO "dist/TokenChecker-macOS.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TokenChecker-macOS
+          path: dist/TokenChecker-macOS.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+      - name: Build TokenChecker.exe
+        run: |
+          pyinstaller --noconfirm --clean TokenChecker.spec
+          copy dist\TokenChecker.exe dist\TokenChecker-Windows.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TokenChecker-Windows
+          path: dist/TokenChecker-Windows.exe
+
+  release:
+    needs: [build-macos, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/TokenChecker-macOS/TokenChecker-macOS.dmg
+            artifacts/TokenChecker-Windows/TokenChecker-Windows.exe
+          generate_release_notes: true
