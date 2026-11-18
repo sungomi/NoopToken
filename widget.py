@@ -278,6 +278,7 @@ UI_HTML = r"""<!DOCTYPE html>
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    pointer-events: none;
   }
 
   /* Top 4-Pill Summary Bar */
@@ -943,7 +944,7 @@ UI_HTML = r"""<!DOCTYPE html>
       <button class="ctrl-btn" onclick="toggleAllBoxes()" title="모든 계정/박스 접기·펼치기">접기</button>
       <button class="ctrl-btn" id="btnCompact" onclick="toggleCompact()" title="상단 미니바 모드로 축소">미니바</button>
       <button class="ctrl-btn active" id="btnPin" onclick="togglePin()" title="항상 위에 고정">고정</button>
-      <button class="ctrl-btn" id="btnGlobalRefresh" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
+      <button class="ctrl-btn" id="btnGlobalRefresh" onmousedown="event.stopPropagation()" onpointerdown="event.stopPropagation()" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
       </button>
     </div>

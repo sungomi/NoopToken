@@ -564,6 +564,7 @@ def fetch_claude_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, An
     org_id = c_auth.get("org_id", "").strip()
 
     usage_data = None
+    usage_is_oauth = False
     badge = "Claude 연동됨"
 
     if oauth_token:
@@ -595,6 +596,7 @@ def fetch_claude_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, An
                     )
             if r.status_code == 200:
                 usage_data = r.json()
+                usage_is_oauth = True
                 badge = "Claude Pro / Max"
         except Exception:
             pass
@@ -641,7 +643,10 @@ def fetch_claude_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, An
         ]:
             if isinstance(bucket_obj, dict) and bucket_obj.get("utilization") is not None:
                 u = float(bucket_obj["utilization"])
-                used_pct = u if u > 1.0 else u * 100.0
+                if usage_is_oauth:
+                    used_pct = u
+                else:
+                    used_pct = u if u > 1.0 else u * 100.0
                 rem_val = round(max(0.0, 100.0 - used_pct), 1)
                 r_txt = _format_reset_countdown(_parse_iso(bucket_obj.get("resets_at")))
                 bars.append({
