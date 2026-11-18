@@ -2590,6 +2590,13 @@ def _find_free_port(start_port: int = 17890) -> int:
     return start_port
 
 
+def _build_server_worker_cmd(port: int, parent_pid: int) -> List[str]:
+    """Build command arguments to spawn the isolated HTTP server worker for frozen or source runs."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--server-worker", str(port), str(parent_pid)]
+    return [sys.executable, os.path.abspath(__file__), "--server-worker", str(port), str(parent_pid)]
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Agent Official Quota Floating Widget")
     parser.add_argument("--cli", action="store_true", help="터미널에서 상태 확인")
@@ -2616,20 +2623,36 @@ def main():
         port = _find_free_port(17890)
         OAUTH_STATE["server_port"] = port
         server_proc = subprocess.Popen(
-            [sys.executable, os.path.abspath(__file__), "--server-worker", str(port), str(os.getpid())],
+            _build_server_worker_cmd(port, os.getpid()),
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
             close_fds=True,
         )
         logging.info(f"Spawned isolated server worker process PID={server_proc.pid} on port {port}")
         url = f"http://127.0.0.1:{port}"
+        worker_healthy = False
         for _ in range(30):
             try:
                 r = requests.get(f"{url}/api/health", timeout=0.3)
                 if r.status_code == 200:
                     logging.info(f"Server worker healthy at {url}")
+                    worker_healthy = True
                     break
             except Exception:
                 time.sleep(0.1)
+        if not worker_healthy:
+            err_msg = f"Server worker failed to respond on {url} after 30 attempts."
+            logging.error(err_msg)
+            try:
+                import ctypes
+                ctypes.windll.user32.MessageBoxW(
+                    0,
+                    f"로컬 서버 워커가 응답하지 않아 {APP_NAME}를 시작할 수 없습니다.\n({url})",
+                    APP_NAME,
+                    0x10,
+                )
+            except Exception:
+                pass
+            return
     else:
         port = start_background_http_server(17890)
         _ensure_codex_callback_server()
@@ -2676,4 +2699,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
     main()
