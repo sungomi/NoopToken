@@ -75,942 +75,633 @@ UI_HTML = r"""<!DOCTYPE html>
 <title>NoopToken</title>
 <style>
   :root {
-    --bg: #0b0d11;
-    --card-bg: #12151c;
-    --card-border: rgba(255, 255, 255, 0.07);
-    --card-border-hover: rgba(255, 255, 255, 0.13);
-    --box-bg: #0d1016;
-    --box-border: rgba(255, 255, 255, 0.05);
-    --text: #f3f4f6;
-    --text-sub: #d1d5db;
-    --muted: #6b7280;
-    --accent: #e5e7eb;
+    --bg: #f4f5fa;
+    --surface: #ffffff;
+    --surface-2: #f7f8fc;
+    --sidebar: rgba(255, 255, 255, 0.85);
+    --border: #e6e8f0;
+    --border-strong: #d7dae6;
+    --text: #171a2b;
+    --text-2: #5b6078;
+    --text-3: #9095ab;
+    --accent: #5b67f5;
+    --accent-2: #8a94ff;
+    --accent-soft: rgba(110, 123, 255, 0.12);
+    --ok: #16b36e;
+    --warn: #f59e0b;
+    --danger: #ef4462;
+    --shadow-sm: 0 1px 2px rgba(23, 26, 43, 0.06), 0 1px 1px rgba(23, 26, 43, 0.03);
+    --shadow: 0 8px 24px rgba(23, 26, 43, 0.08), 0 2px 6px rgba(23, 26, 43, 0.04);
+    --radius: 16px;
+    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    color-scheme: light;
   }
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10121f;
+      --surface: #181b2c;
+      --surface-2: #1f2336;
+      --sidebar: rgba(21, 24, 40, 0.88);
+      --border: #2a2f47;
+      --border-strong: #363c58;
+      --text: #eef0fb;
+      --text-2: #a7acc8;
+      --text-3: #6f7596;
+      --accent: #7b86ff;
+      --accent-soft: rgba(110, 123, 255, 0.18);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+      color-scheme: dark;
+    }
   }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+  html, body { height: 100%; }
   body {
-    background-color: var(--bg);
+    font-family: var(--font);
+    font-size: 13px;
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Pretendard", "Segoe UI", sans-serif;
-    font-size: 12.5px;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums;
-    overflow-x: hidden;
-    min-height: 100vh;
+    letter-spacing: -0.01em;
+    overflow: hidden;
+  }
+  input { user-select: text; -webkit-user-select: text; }
+  button { font: inherit; color: inherit; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+  .app { display: flex; height: 100vh; width: 100vw; }
+
+  /* ---------------- Sidebar (Full App Mode) ---------------- */
+  .sidebar {
+    width: 218px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    -webkit-font-smoothing: antialiased;
+    padding: 18px 14px 14px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
+  body.compact .sidebar { display: none; }
 
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.24); }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 18px;
+  }
+  .brand-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .brand-title-wrap { display: flex; flex-direction: column; gap: 1px; }
+  .brand-name { font-size: 15.5px; font-weight: 750; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 10.5px; color: var(--text-3); font-weight: 500; }
 
-  /* Top Header */
-  .header {
+  .nav { display: flex; flex-direction: column; gap: 3px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s ease, color 0.14s ease;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  .sidebar-spacer { flex: 1; }
+  .sidebar-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .collapse-btn {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.14s ease, transform 0.12s ease;
+  }
+  .collapse-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sidebar-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--text-3);
+    padding: 0 2px;
+  }
+  .version-link { cursor: pointer; font-weight: 600; }
+  .version-link:hover { color: var(--accent); }
+
+  /* ---------------- Compact Header (Widget Mode) ---------------- */
+  .compact-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  body.compact .compact-header { display: flex; }
+  .compact-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; }
+  .compact-logo { width: 22px; height: 22px; border-radius: 6px; }
+  .compact-actions { display: flex; align-items: center; gap: 5px; }
+
+  /* ---------------- Main Content ---------------- */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 11px 16px;
-    background: rgba(11, 13, 17, 0.92);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    white-space: nowrap;
-  }
-  .title-area {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: -0.015em;
-    color: #f3f4f6;
-    white-space: nowrap;
+    padding: 18px 24px 12px;
     flex-shrink: 0;
-    word-break: keep-all;
   }
-  .app-logo-badge {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: #171b24;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+  body.compact .topbar { display: none; }
+  .page-title { font-size: 18px; font-weight: 750; letter-spacing: -0.02em; }
+  .page-actions { display: flex; align-items: center; gap: 6px; }
+
+  .pill-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    border-radius: 9px;
+    height: 30px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    gap: 5px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.14s ease;
+    white-space: nowrap;
   }
-  .app-logo-badge svg {
-    width: 14px;
-    height: 14px;
+  .pill-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .pill-btn.active { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  .pill-btn:disabled { opacity: 0.65; cursor: default; color: var(--accent); min-width: 32px; }
+  .pill-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; pointer-events: none; }
+
+  body.compact .pill-btn { height: 26px; padding: 0 8px; font-size: 11px; border-radius: 7px; }
+
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
-  .version-pill {
-    font-size: 9.5px;
-    font-weight: 600;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.24);
-    border-radius: 99px;
-    padding: 1.5px 6px;
-    cursor: pointer;
-    transition: all 0.16s ease;
-    letter-spacing: 0;
-  }
-  .version-pill:hover {
-    background: rgba(56, 189, 248, 0.2);
-    border-color: rgba(56, 189, 248, 0.48);
-  }
+  body.compact .scroll-area { padding: 10px 12px 14px; gap: 10px; }
+
   .update-banner {
     display: none;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin: 8px 14px 0 14px;
-    padding: 7px 10px;
-    border-radius: 9px;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(56, 189, 248, 0.12));
-    border: 1px solid rgba(16, 185, 129, 0.32);
-    font-size: 11px;
-    color: #e2e8f0;
-  }
-  .update-banner.show {
-    display: flex;
-  }
-  .update-banner-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  .update-apply-btn {
-    background: linear-gradient(135deg, #10b981, #0ea5e9);
-    color: #061018;
-    border: none;
-    border-radius: 6px;
-    padding: 4px 9px;
-    font-size: 10.5px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .update-apply-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-  .update-close-btn {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
     font-size: 12px;
+    font-weight: 600;
+  }
+  .update-banner.show { display: flex; }
+  .update-apply-btn {
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
     cursor: pointer;
-    padding: 2px 4px;
   }
-  .live-indicator {
-    position: relative;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
-    transition: background 0.25s ease;
-    flex-shrink: 0;
-  }
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .ctrl-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    color: #9ca3af;
-    border-radius: 6px;
-    height: 25px;
-    padding: 0 7.5px;
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    transition: all 0.14s ease;
-    white-space: nowrap;
-    flex-shrink: 0;
-    word-break: keep-all;
-    line-height: 1;
-  }
-  .ctrl-btn:hover {
-    color: #f3f4f6;
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-  .ctrl-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-    color: #e5e7eb;
-    min-width: 28px;
-  }
-  .ctrl-btn.active {
-    color: #f3f4f6;
-    border-color: rgba(255, 255, 255, 0.18);
-    background: #1b202b;
-  }
-  .ctrl-btn svg {
-    width: 12px;
-    height: 12px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    pointer-events: none;
-  }
+  .update-close-btn { background: transparent; border: none; color: var(--text-2); cursor: pointer; padding: 2px 5px; }
 
-  /* Top 4-Pill Summary Bar */
+  /* Summary Grid */
   .mini-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  body.compact .mini-bar {
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
     gap: 7px;
-    padding: 10px 14px 4px 14px;
   }
   .mini-pill {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 9px;
-    padding: 8px 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
-    transition: border-color 0.14s ease, background 0.14s ease;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.14s ease, transform 0.12s ease;
   }
-  .mini-pill:hover {
-    border-color: var(--card-border-hover);
-    background: #161a23;
-  }
+  body.compact .mini-pill { padding: 8px 10px; border-radius: 10px; gap: 4px; }
+  .mini-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
   .mini-pill-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10.5px;
-    color: #94a3b8;
+    font-size: 11.5px;
+    color: var(--text-2);
     font-weight: 600;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
   }
-  .mini-pill-val {
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-  }
-  .mini-progress {
-    height: 3.5px;
-    background: rgba(255, 255, 255, 0.07);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .mini-progress-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 0.4s ease;
-  }
+  .mini-pill-val { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  body.compact .mini-pill-val { font-size: 13px; }
+  .mini-progress { height: 4px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+  .mini-progress-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
 
-  /* Main Account Cards List */
+  /* Cards */
   .cards {
-    padding: 6px 14px 14px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
   }
   body.compact .cards {
-    display: none;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  @media (max-width: 720px) {
+    .cards { grid-template-columns: 1fr; }
   }
 
   .card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 11px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: border-color 0.16s ease;
+    transition: border-color 0.15s ease;
   }
-  .card:hover {
-    border-color: var(--card-border-hover);
-  }
-  .card.dragging {
-    opacity: 0.92;
-    border-color: rgba(56, 189, 248, 0.65);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.4);
-    transform: scale(1.01);
-    z-index: 25;
-  }
+  body.compact .card { border-radius: 12px; }
+  .card:hover { border-color: var(--border-strong); }
+  .card.dragging { opacity: 0.92; border-color: var(--accent); box-shadow: var(--shadow); }
 
   .card-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 11px 13px;
-    cursor: grab;
-    transition: background 0.15s ease;
-  }
-  .card-header:active {
-    cursor: grabbing;
-  }
-  .card-header:hover {
-    background: rgba(255, 255, 255, 0.025);
-  }
-
-  .provider-left {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    min-width: 0;
+    padding: 12px 14px;
+    cursor: grab;
   }
-  .drag-grip {
-    color: #475569;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 12px;
-    height: 16px;
-    flex-shrink: 0;
-    transition: color 0.15s ease;
-  }
-  .card-header:hover .drag-grip,
-  .box-header:hover .drag-grip {
-    color: #94a3b8;
-  }
-  .drag-grip svg {
-    width: 10px;
-    height: 14px;
-    fill: currentColor;
-  }
+  body.compact .card-header { padding: 10px 12px; }
+  .card-header:active { cursor: grabbing; }
+  .provider-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+  .drag-grip { width: 10px; height: 14px; opacity: 0.28; display: inline-flex; align-items: center; flex-shrink: 0; }
+  .card-header:hover .drag-grip, .box-header:hover .drag-grip { opacity: 0.7; }
+  .drag-grip svg { width: 10px; height: 14px; fill: currentColor; }
 
   .brand-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .brand-icon svg {
-    width: 14px;
-    height: 14px;
-  }
-  .brand-antigravity {
-    background: linear-gradient(135deg, #4f46e5, #0ea5e9);
-    color: #ffffff;
-  }
-  .brand-claude {
-    background: linear-gradient(135deg, #d97757, #b45309);
-    color: #ffffff;
-  }
-  .brand-cursor {
-    background: linear-gradient(135deg, #0284c7, #22d3ee);
-    color: #ffffff;
-  }
-  .brand-codex {
-    background: linear-gradient(135deg, #059669, #10b981);
-    color: #ffffff;
-  }
+  .brand-icon svg { width: 14px; height: 14px; }
+  .brand-antigravity { background: rgba(91, 103, 245, 0.14); color: #5b67f5; }
+  .brand-claude { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+  .brand-cursor { background: rgba(14, 165, 233, 0.14); color: #0284c7; }
+  .brand-codex { background: rgba(22, 179, 110, 0.14); color: #16b36e; }
 
-  .provider-titles {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    min-width: 0;
+  .provider-titles { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+  .provider-info-btn {
+    background: transparent; border: none; padding: 2px 5px; margin: -2px -5px;
+    border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
   }
-  .provider-name {
-    font-weight: 700;
-    font-size: 13.5px;
-    letter-spacing: -0.01em;
-    color: #f8fafc;
-    white-space: nowrap;
+  .provider-info-btn:hover { background: var(--accent-soft); color: var(--accent); }
+  .provider-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+  .running-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; flex-shrink: 0;
   }
   .badge {
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: #94a3b8;
-    font-weight: 600;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 10.5px; font-weight: 600; color: var(--text-2);
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 99px; white-space: nowrap;
   }
-  .logout-btn {
-    background: transparent;
-    border: none;
-    color: #475569;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  .provider-refresh-btn, .logout-btn {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-2); font-size: 10.5px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    opacity: 0.7; transition: all 0.14s ease;
   }
-  .logout-btn:hover {
-    color: #f87171;
-    background: rgba(239, 68, 68, 0.14);
-  }
+  .provider-refresh-btn:hover, .logout-btn:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
+  .provider-refresh-btn:disabled { opacity: 1; color: var(--accent); font-weight: 700; font-size: 10px; cursor: default; }
 
-  .card-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .pct-pill {
-    display: flex;
-    align-items: baseline;
-    gap: 3px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .rem-pct {
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-  }
-  .rem-label {
-    font-size: 10px;
-    color: var(--muted);
-    font-weight: 600;
-    white-space: nowrap;
-  }
+  .card-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .pct-pill { display: inline-flex; align-items: baseline; gap: 3px; }
+  .rem-pct { font-size: 15px; font-weight: 800; }
+  .rem-label { font-size: 10px; color: var(--text-3); font-weight: 600; }
   .chevron-badge {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    transition: transform 0.2s ease, background 0.15s ease;
+    width: 22px; height: 22px; border-radius: 7px; background: var(--surface-2); color: var(--text-2);
+    display: flex; align-items: center; justify-content: center; font-size: 10px; transition: transform 0.2s ease;
   }
-  .card-header:hover .chevron-badge {
-    background: rgba(255, 255, 255, 0.09);
-    color: #f8fafc;
-  }
-  .chevron-badge.folded {
-    transform: rotate(-90deg);
-  }
+  .chevron-badge.folded { transform: rotate(-90deg); }
 
-  .card-body {
-    padding: 0 12px 12px 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.045);
-  }
-  .card-body.folded {
-    display: none;
-  }
+  .card-body { padding: 0 12px 12px; border-top: 1px solid var(--border); }
+  .card-body.folded { display: none; }
+  .boxes-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 
-  /* Inner Model Group Boxes (3 boxes in Antigravity, etc.) */
-  .boxes-list {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
   .group-box {
-    background: var(--box-bg);
-    border: 1px solid var(--box-border);
-    border-radius: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 11px;
     overflow: hidden;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
   }
-  .group-box:hover {
-    border-color: rgba(255, 255, 255, 0.11);
-  }
-  .group-box.dragging {
-    opacity: 0.94;
-    border-color: rgba(56, 189, 248, 0.65);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
-    transform: scale(1.01);
-  }
-
+  .group-box.dragging { border-color: var(--accent); box-shadow: var(--shadow); }
   .box-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8.5px 10px;
-    cursor: grab;
-    background: rgba(255, 255, 255, 0.015);
-    transition: background 0.15s ease;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; cursor: grab;
   }
-  .box-header:active {
-    cursor: grabbing;
-  }
-  .box-header:hover {
-    background: rgba(255, 255, 255, 0.04);
-  }
-  .box-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
+  .box-title-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .box-title-btn {
-    background: transparent;
-    border: none;
-    padding: 2px 5px;
-    margin: -2px -5px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 12px;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: background 0.15s ease, color 0.15s ease;
+    background: transparent; border: none; padding: 2px 5px; margin: -2px -5px;
+    border-radius: 6px; font-weight: 700; font-size: 12px; color: var(--text);
+    cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .box-title-btn:hover {
-    background: rgba(56, 189, 248, 0.14);
-    color: #38bdf8;
+  .box-title-btn:hover { background: var(--accent-soft); color: var(--accent); }
+  .info-dot { font-size: 10.5px; color: var(--text-3); flex-shrink: 0; }
+  .box-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .box-pct-badge { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .box-chevron { font-size: 10px; color: var(--text-3); transition: transform 0.2s ease; }
+  .box-chevron.folded { transform: rotate(-90deg); }
+  .box-body { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .box-body.folded { display: none; }
+
+  .bar-row { display: flex; flex-direction: column; gap: 4px; }
+  .bar-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 11.5px; }
+  .bar-name { font-weight: 600; color: var(--text-2); white-space: nowrap; }
+  .bar-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .bar-reset { font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
+  .bar-val { font-weight: 700; white-space: nowrap; }
+  .bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
+
+  /* Login & Settings Views */
+  .login-box { padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .login-btn {
+    background: var(--accent); color: #ffffff; border: none; border-radius: 9px;
+    padding: 9px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
   }
-  .info-dot {
-    font-size: 10.5px;
-    color: #64748b;
-    font-weight: 600;
+  .login-btn:hover { opacity: 0.92; }
+  .login-hint { font-size: 11px; color: var(--text-3); line-height: 1.45; }
+  .paste-box { display: none; gap: 6px; }
+  .paste-box.show { display: flex; }
+  .paste-input {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 7px 10px; font-size: 11.5px; outline: none;
   }
-  .box-title-btn:hover .info-dot {
-    color: #38bdf8;
-  }
-  .provider-info-btn {
-    background: transparent;
-    border: none;
-    padding: 2px 5px;
-    margin: -2px -5px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    transition: background 0.15s ease;
-  }
-  .provider-info-btn:hover {
-    background: rgba(56, 189, 248, 0.14);
-  }
-  .provider-info-btn:hover .provider-name {
-    color: #38bdf8;
-  }
-  .provider-refresh-btn {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: rgba(255, 255, 255, 0.04);
-    color: #94a3b8;
-    font-size: 10.5px;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-  }
-  .provider-refresh-btn:hover {
-    color: #38bdf8;
-    border-color: rgba(56, 189, 248, 0.45);
-    background: rgba(56, 189, 248, 0.12);
-  }
-  .provider-refresh-btn:disabled {
-    opacity: 0.7;
-    cursor: default;
-    color: #38bdf8;
-    font-size: 9.5px;
-    font-weight: 700;
-  }
-  .running-dot {
-    width: 6.5px;
-    height: 6.5px;
-    border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 7px rgba(16, 185, 129, 0.9);
-    display: inline-block;
-    margin-left: 5px;
-    flex-shrink: 0;
-  }
-  .notify-pill {
-    font-size: 9.5px;
-    font-weight: 600;
-    color: #94a3b8;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
-    padding: 1.5px 7px;
-    cursor: pointer;
-    transition: all 0.16s ease;
-  }
-  .notify-pill.active {
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
-    border-color: rgba(16, 185, 129, 0.28);
-  }
-  .notify-pill:hover {
-    border-color: rgba(255, 255, 255, 0.25);
+  .paste-input:focus { border-color: var(--accent); }
+  .paste-submit {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 7px 12px; font-weight: 600; font-size: 11.5px; cursor: pointer;
   }
 
-  /* Floating Info Modal */
+  .settings-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-sm);
+  }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { padding-bottom: 0; border-bottom: 0; }
+  .setting-title { font-weight: 650; font-size: 13px; }
+  .setting-desc { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+  .empty-compact {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 16px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;
+  }
+
+  /* Modal */
   .info-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(4, 6, 10, 0.68);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-    z-index: 100;
+    position: fixed; inset: 0; background: rgba(10, 12, 22, 0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; padding: 18px; z-index: 100;
   }
-  .info-modal-backdrop.show {
-    display: flex;
-  }
+  .info-modal-backdrop.show { display: flex; }
   .info-modal-card {
-    width: 100%;
-    max-width: 340px;
-    background: rgba(17, 22, 33, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    padding: 14px 16px;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 10px;
   }
-  .info-modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .info-modal-title {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: #f8fafc;
-  }
+  .info-modal-head { display: flex; align-items: center; justify-content: space-between; }
+  .info-modal-title { font-size: 14px; font-weight: 700; }
   .info-modal-close {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    color: #94a3b8;
-    border-radius: 6px;
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    font-size: 11px;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2);
+    border-radius: 7px; width: 24px; height: 24px; cursor: pointer; font-size: 11px;
   }
-  .info-modal-close:hover {
-    color: #f8fafc;
-    background: rgba(255, 255, 255, 0.12);
-  }
-  .info-modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 260px;
-    overflow-y: auto;
-  }
+  .info-modal-body { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
   .info-modal-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 11.5px;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12px;
   }
-  .info-modal-label {
-    color: #94a3b8;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-  .info-modal-val {
-    color: #f1f5f9;
-    font-weight: 600;
-    text-align: right;
-    word-break: break-all;
-  }
+  .info-modal-label { color: var(--text-2); font-weight: 600; }
+  .info-modal-val { font-weight: 700; text-align: right; word-break: break-all; }
   .info-modal-item {
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
-    font-size: 11.5px;
-    font-weight: 500;
+    padding: 7px 10px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 500;
   }
   .info-modal-note {
-    margin-top: 4px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: rgba(56, 189, 248, 0.08);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    color: #94a3b8;
-    font-size: 10.5px;
-    line-height: 1.45;
-  }
-  .box-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  .box-pct-badge {
-    font-size: 12px;
-    font-weight: 800;
-    padding: 1.5px 6px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .box-chevron {
-    font-size: 9.5px;
-    color: #64748b;
-    transition: transform 0.18s ease;
-    display: inline-block;
-  }
-  .box-chevron.folded {
-    transform: rotate(-90deg);
+    margin-top: 4px; padding: 8px 10px; border-radius: 9px;
+    background: var(--accent-soft); color: var(--text-2); font-size: 11px; line-height: 1.45;
   }
 
-  .box-body {
-    padding: 9px 11px 10px 11px;
-    border-top: 1px solid rgba(255, 255, 255, 0.045);
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-  }
-  .box-body.folded {
-    display: none;
-  }
-
-  /* Progress Bars inside each Box (Weekly + 5h = 2 bars per box) */
-  .bar-row {
-    display: flex;
-    flex-direction: column;
-    gap: 4.5px;
-  }
-  .bar-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-  }
-  .bar-name {
-    color: #cbd5e1;
-    font-weight: 600;
-    font-size: 11px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .bar-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .bar-reset {
-    font-size: 10px;
-    color: #94a3b8;
-    background: rgba(255, 255, 255, 0.045);
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .bar-val {
-    font-weight: 800;
-    font-size: 11.5px;
-    min-width: 38px;
-    text-align: right;
-    white-space: nowrap;
-  }
-  .bar-track {
-    width: 100%;
-    height: 6.5px;
-    background: rgba(255, 255, 255, 0.065);
-    border-radius: 99px;
-    overflow: hidden;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-  }
-  .bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  }
-
-  /* Unauthenticated Login Button Card */
-  .login-box {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-  .login-btn {
-    width: 100%;
-    padding: 9px 12px;
-    border-radius: 9px;
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(99, 102, 241, 0.14));
-    color: #f0f9ff;
-    font-weight: 700;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    transition: all 0.16s ease;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-  }
-  .login-btn:hover {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(99, 102, 241, 0.24));
-    border-color: rgba(56, 189, 248, 0.65);
-    transform: translateY(-1px);
-  }
-  .login-hint {
-    font-size: 10.5px;
-    color: #64748b;
-    line-height: 1.4;
-  }
-
-  .paste-box {
-    display: none;
-    margin-top: 4px;
-    gap: 6px;
-  }
-  .paste-box.show {
-    display: flex;
-  }
-  .paste-input {
-    flex: 1;
-    background: #07090e;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text);
-    border-radius: 7px;
-    padding: 6px 9px;
-    font-size: 11px;
-    user-select: text;
-    -webkit-user-select: text;
-    outline: none;
-  }
-  .paste-input:focus {
-    border-color: var(--accent);
-  }
-  .paste-submit {
-    background: var(--accent);
-    color: #080b11;
-    border: none;
-    border-radius: 7px;
-    padding: 6px 11px;
-    font-weight: 700;
-    font-size: 11px;
-    cursor: pointer;
-  }
-
-  .footer {
-    padding: 7px 14px 9px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 10px;
-    color: #64748b;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    background: rgba(8, 10, 15, 0.6);
-  }
+  .view-panel { display: none; flex-direction: column; gap: 14px; }
+  .view-panel.active { display: flex; }
 </style>
 </head>
 <body>
-
-  <div class="header pywebview-drag-region">
-    <div class="title-area">
-      <span class="app-logo-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5.5 17.5a8.5 8.5 0 1 1 13 0" stroke="#34d399" stroke-width="2" stroke-opacity="0.85" />
-          <path d="M9 15.5V8.5l6 7V8.5" stroke="#f3f4f6" stroke-width="2.1" />
-        </svg>
-      </span>
-      <span id="appTitleText">NoopToken</span>
-    </div>
-    <div class="controls">
-      <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
-      <button class="ctrl-btn" onclick="toggleAllBoxes()" title="모든 계정/박스 접기·펼치기">접기</button>
-      <button class="ctrl-btn" id="btnCompact" onclick="toggleCompact()" title="상단 미니바 모드로 축소">미니바</button>
-      <button class="ctrl-btn active" id="btnPin" onclick="togglePin()" title="항상 위에 고정">고정</button>
-      <button class="ctrl-btn" id="btnGlobalRefresh" onmousedown="event.stopPropagation()" onpointerdown="event.stopPropagation()" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
-        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <div class="update-banner" id="updateBanner">
-    <span id="updateBannerText">새 버전이 있습니다</span>
-    <div class="update-banner-actions">
-      <button class="update-apply-btn" id="updateApplyBtn" onclick="triggerUpdate()">업데이트</button>
-      <button class="update-close-btn" onclick="dismissUpdateBanner()" title="닫기">✕</button>
-    </div>
-  </div>
-
-  <div class="mini-bar" id="miniBar"></div>
-  <div class="cards" id="cardsContainer"></div>
-
-  <div class="footer">
-    <span style="display:inline-flex;align-items:center;gap:6px;">
-      <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
-      <span class="notify-pill active" id="btnNotify" onclick="toggleNotifications()" title="한도 80%·90% 도달 및 리셋 데스크톱 알림 켜기/끄기">알림 켜짐</span>
-    </span>
-    <span id="updatedAt">동기화 중...</span>
-  </div>
-
-  <div class="info-modal-backdrop" id="infoModalBackdrop" onclick="closeInfoModal(event)">
-    <div class="info-modal-card" onclick="event.stopPropagation()">
-      <div class="info-modal-head">
-        <span class="info-modal-title" id="infoModalTitle">상세 정보</span>
-        <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/assets/icon.png" class="brand-logo" alt="NoopToken" />
+      <div class="brand-title-wrap">
+        <span class="brand-name">NoopToken</span>
+        <span class="brand-sub">AI Quota Monitor</span>
       </div>
-      <div class="info-modal-body" id="infoModalBody"></div>
     </div>
+
+    <nav class="nav">
+      <button class="nav-item active" id="navDashboard" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>대시보드</span>
+      </button>
+      <button class="nav-item" id="navAccounts" onclick="switchTab('accounts')">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>계정 연동</span>
+      </button>
+      <button class="nav-item" id="navSettings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>설정</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-card">
+      <button class="collapse-btn" onclick="toggleCompact()">
+        <span>미니 위젯으로 축소</span>
+      </button>
+      <div class="sidebar-meta">
+        <span class="version-link" id="appVersionBadge" onclick="checkForUpdates(true)" title="업데이트 확인">v__APP_VERSION__</span>
+        <span id="updatedAt">동기화 중...</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="compact-header pywebview-drag-region">
+      <div class="compact-brand">
+        <img src="/assets/icon.png" class="compact-logo" alt="NoopToken" />
+        <span>NoopToken</span>
+      </div>
+      <div class="compact-actions">
+        <button class="pill-btn active" id="btnDisplayModeCompact" onclick="toggleDisplayMode()">사용량 기준</button>
+        <button class="pill-btn" id="btnGlobalRefreshCompact" onmousedown="event.stopPropagation()" onpointerdown="event.stopPropagation()" onclick="manualGlobalRefresh()" title="새로고침 (5초 쿨다운)">
+          <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+        </button>
+        <button class="pill-btn" onclick="toggleCompact()" title="전체 창으로 확장">확장</button>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <h1 class="page-title" id="pageTitle">사용량 대시보드</h1>
+      <div class="page-actions">
+        <button class="pill-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()">사용량 기준</button>
+        <button class="pill-btn" onclick="toggleAllBoxes()">접기/펼치기</button>
+        <button class="pill-btn" id="btnGlobalRefresh" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
+          <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+          <span>새로고침</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="scroll-area">
+      <div class="update-banner" id="updateBanner">
+        <span id="updateBannerText">새 버전이 있습니다</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="update-apply-btn" id="updateApplyBtn" onclick="triggerUpdate()">업데이트</button>
+          <button class="update-close-btn" onclick="dismissUpdateBanner()">✕</button>
+        </div>
+      </div>
+
+      <section class="view-panel active" id="viewDashboard">
+        <div class="mini-bar" id="miniBar"></div>
+        <div class="cards" id="cardsContainer"></div>
+      </section>
+
+      <section class="view-panel" id="viewAccounts">
+        <div class="cards" id="accountsContainer"></div>
+      </section>
+
+      <section class="view-panel" id="viewSettings">
+        <div class="settings-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">표시 기준</div>
+              <div class="setting-desc">한도를 사용량(% 사용) 또는 잔여량(% 남음) 기준으로 표시합니다.</div>
+            </div>
+            <button class="pill-btn active" id="btnDisplayModeSettings" onclick="toggleDisplayMode()">사용량 기준</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">한도 임계치 · 리셋 알림</div>
+              <div class="setting-desc">사용량 80%·90% 도달 및 한도 리셋 시 데스크톱 알림을 보냅니다.</div>
+            </div>
+            <button class="pill-btn active" id="btnNotify" onclick="toggleNotifications()">알림 켜짐</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">창 항상 위에 고정</div>
+              <div class="setting-desc">다른 창 위에 위젯을 항상 띄워 둡니다.</div>
+            </div>
+            <button class="pill-btn" id="btnPin" onclick="togglePin()">꺼짐</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">버전 및 업데이트</div>
+              <div class="setting-desc">현재 버전 v__APP_VERSION__ · GitHub 최신 릴리즈를 확인합니다.</div>
+            </div>
+            <button class="pill-btn" onclick="checkForUpdates(true)">업데이트 확인</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="info-modal-backdrop" id="infoModalBackdrop" onclick="closeInfoModal(event)">
+  <div class="info-modal-card" onclick="event.stopPropagation()">
+    <div class="info-modal-head">
+      <span class="info-modal-title" id="infoModalTitle">상세 정보</span>
+      <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+    </div>
+    <div class="info-modal-body" id="infoModalBody"></div>
   </div>
+</div>
 
 <script>
   let compactMode = false;
-  let alwaysOnTop = true;
+  let alwaysOnTop = false;
+  let currentTab = "dashboard";
   let openPasteBoxes = {};
   let lastData = null;
   let isDragging = false;
+  let notifyEnabled = true;
 
-  // Persist fold states, displayMode (default: "used"), and custom ordering
   let displayMode = localStorage.getItem("ai_quota_display_mode") || "used";
   let foldedCards = JSON.parse(localStorage.getItem("ai_quota_folded_cards") || "{}");
   let foldedBoxes = JSON.parse(localStorage.getItem("ai_quota_folded_boxes") || "{}");
@@ -1025,21 +716,28 @@ UI_HTML = r"""<!DOCTYPE html>
     localStorage.setItem("ai_quota_box_order", JSON.stringify(boxOrder));
   }
 
+  function switchTab(tab) {
+    currentTab = tab;
+    ["dashboard", "accounts", "settings"].forEach(t => {
+      const nav = document.getElementById("nav" + t.charAt(0).toUpperCase() + t.slice(1));
+      const view = document.getElementById("view" + t.charAt(0).toUpperCase() + t.slice(1));
+      if (nav) nav.classList.toggle("active", t === tab);
+      if (view) view.classList.toggle("active", t === tab);
+    });
+    const titles = { dashboard: "사용량 대시보드", accounts: "계정 연동", settings: "설정" };
+    const pt = document.getElementById("pageTitle");
+    if (pt) pt.textContent = titles[tab] || "NoopToken";
+  }
+
   function updateModeHeaderUI() {
-    const btn = document.getElementById("btnDisplayMode");
-    const titleEl = document.getElementById("appTitleText");
-    if (titleEl) titleEl.textContent = "NoopToken";
-    if (displayMode === "used") {
-      if (btn) {
-        btn.textContent = "사용량 기준";
-        btn.classList.add("active");
+    const label = displayMode === "used" ? "사용량 기준" : "잔여량 기준";
+    ["btnDisplayMode", "btnDisplayModeCompact", "btnDisplayModeSettings"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = label;
+        el.classList.toggle("active", displayMode === "used");
       }
-    } else {
-      if (btn) {
-        btn.textContent = "잔여량 기준";
-        btn.classList.remove("active");
-      }
-    }
+    });
   }
 
   function toggleDisplayMode() {
@@ -1048,193 +746,6 @@ UI_HTML = r"""<!DOCTYPE html>
     updateModeHeaderUI();
     if (lastData) render(lastData);
   }
-
-  function getDisplayMetric(remPct) {
-    const r = Math.max(0, Math.min(100, Number(remPct) || 0));
-    if (displayMode === "used") {
-      const used = Math.round((100 - r) * 10) / 10;
-      return {
-        pct: used,
-        width: used,
-        tag: "사용",
-        summaryTag: "사용",
-      };
-    } else {
-      const rem = Math.round(r * 10) / 10;
-      return {
-        pct: rem,
-        width: rem,
-        tag: "남음",
-        summaryTag: "남음",
-      };
-    }
-  }
-
-  async function syncOrderToBackend() {
-    saveStateToLocal();
-    try {
-      await fetch("/api/save_order", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({card_order: cardOrder, box_order: boxOrder})
-      });
-    } catch (e) {}
-  }
-
-  function getBrandIconSvg(id) {
-    if (id === "antigravity") {
-      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/></svg>`;
-    }
-    if (id === "claude") {
-      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>`;
-    }
-    if (id === "cursor") {
-      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l16 7.5-7.2 2.3L10.5 20 4 3z"/></svg>`;
-    }
-    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 20 7 20 17 12 22 4 17 4 7 12 2"/><circle cx="12" cy="12" r="3"/></svg>`;
-  }
-
-  function getGripSvg() {
-    return `<svg viewBox="0 0 10 14"><circle cx="2.5" cy="2.5" r="1.2"/><circle cx="7.5" cy="2.5" r="1.2"/><circle cx="2.5" cy="7" r="1.2"/><circle cx="7.5" cy="7" r="1.2"/><circle cx="2.5" cy="11.5" r="1.2"/><circle cx="7.5" cy="11.5" r="1.2"/></svg>`;
-  }
-
-  function getColor(remPct) {
-    if (remPct >= 50) return "#10b981";
-    if (remPct >= 20) return "#f59e0b";
-    return "#ef4444";
-  }
-
-  function getGradient(remPct) {
-    if (remPct >= 50) return "linear-gradient(90deg, #059669 0%, #10b981 60%, #34d399 100%)";
-    if (remPct >= 20) return "linear-gradient(90deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)";
-    return "linear-gradient(90deg, #e11d48 0%, #ef4444 60%, #f87171 100%)";
-  }
-
-  function shortName(id) {
-    if (id === "antigravity") return "AGY";
-    if (id === "claude") return "Claude";
-    if (id === "cursor") return "Cursor";
-    if (id === "codex") return "Codex";
-    return id;
-  }
-
-  function toggleCard(cardId) {
-    foldedCards[cardId] = !foldedCards[cardId];
-    saveStateToLocal();
-    if (lastData) render(lastData);
-  }
-
-  function toggleBox(boxId) {
-    foldedBoxes[boxId] = !foldedBoxes[boxId];
-    saveStateToLocal();
-    if (lastData) render(lastData);
-  }
-
-  function toggleAllBoxes() {
-    if (!lastData || !lastData.providers) return;
-    const anyUnfolded = lastData.providers.some(p => !foldedCards[p.id]);
-    lastData.providers.forEach(p => {
-      foldedCards[p.id] = anyUnfolded;
-      (p.boxes || []).forEach(b => {
-        foldedBoxes[b.id] = anyUnfolded;
-      });
-    });
-    saveStateToLocal();
-    render(lastData);
-  }
-
-  async function fetchData(force = false, providerId = "") {
-    try {
-      let qs = "";
-      if (force) {
-        qs = providerId ? `?force=1&provider=${encodeURIComponent(providerId)}` : "?force=1";
-      }
-      const r = await fetch("/api/quotas" + qs);
-      return await r.json();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  let loginPollTimer = null;
-
-  async function openLogin(providerId, event) {
-    if (event) event.stopPropagation();
-    if (providerId === "claude" || providerId === "cursor") {
-      openPasteBoxes[providerId] = true;
-      if (lastData) render(lastData);
-    }
-    try {
-      await fetch("/api/login/" + providerId, { method: "POST" });
-    } catch (e) {}
-    if (loginPollTimer) clearInterval(loginPollTimer);
-    let ticks = 0;
-    loginPollTimer = setInterval(async () => {
-      ticks++;
-      await refreshNow(true);
-      if (lastData && lastData.providers) {
-        const p = lastData.providers.find(x => x.id === providerId);
-        if (p && p.logged_in) {
-          clearInterval(loginPollTimer);
-          loginPollTimer = null;
-        }
-      }
-      if (ticks > 40) {
-        clearInterval(loginPollTimer);
-        loginPollTimer = null;
-      }
-    }, 1500);
-  }
-
-  async function submitCodeOrToken(providerId, event) {
-    if (event) event.stopPropagation();
-    const el = document.getElementById("input_" + providerId);
-    if (!el || !el.value.trim()) return;
-    const val = el.value.trim();
-    try {
-      await fetch("/api/submit_code", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({provider_id: providerId, code: val})
-      });
-    } catch (e) {}
-    openPasteBoxes[providerId] = false;
-    await refreshNow(true);
-  }
-
-  async function logoutProvider(providerId, event) {
-    if (event) event.stopPropagation();
-    try {
-      await fetch("/api/logout/" + providerId, { method: "POST" });
-    } catch (e) {}
-    await refreshNow(true);
-  }
-
-  function applyClientOrdering(providers) {
-    const map = {};
-    providers.forEach(p => { map[p.id] = p; });
-    const orderedIds = cardOrder.filter(id => map[id]).concat(
-      providers.map(p => p.id).filter(id => !cardOrder.includes(id))
-    );
-    cardOrder = orderedIds;
-
-    return orderedIds.map(pid => {
-      const p = Object.assign({}, map[pid]);
-      if (p.boxes && p.boxes.length > 0) {
-        const bOrder = boxOrder[pid] || [];
-        const bMap = {};
-        p.boxes.forEach(b => { bMap[b.id] = b; });
-        const orderedBoxIds = bOrder.filter(bid => bMap[bid]).concat(
-          p.boxes.map(b => b.id).filter(bid => !bOrder.includes(bid))
-        );
-        boxOrder[pid] = orderedBoxIds;
-        p.boxes = orderedBoxIds.map(bid => bMap[bid]);
-      }
-      return p;
-    });
-  }
-
-  let notifyEnabled = true;
 
   function updateNotifyUI(enabled) {
     notifyEnabled = !!enabled;
@@ -1256,183 +767,328 @@ UI_HTML = r"""<!DOCTYPE html>
     } catch (e) {}
   }
 
-  function render(data) {
-    if (!data || !data.providers || isDragging) return;
-    lastData = data;
-    if (typeof data.notifications_enabled === "boolean") {
-      updateNotifyUI(data.notifications_enabled);
+  function getDisplayMetric(remPct) {
+    const r = Math.max(0, Math.min(100, Number(remPct) || 0));
+    if (displayMode === "used") {
+      const used = Math.round((100 - r) * 10) / 10;
+      return { val: used, pct: used, width: used, tag: "사용", summaryTag: "사용" };
     }
-    document.getElementById("updatedAt").textContent = "갱신 " + data.updated_at;
+    const rem = Math.round(r * 10) / 10;
+    return { val: rem, pct: rem, width: rem, tag: "남음", summaryTag: "남음" };
+  }
 
-    const savedInputs = {};
-    ["claude", "cursor"].forEach(id => {
-      const el = document.getElementById("input_" + id);
-      if (el) savedInputs[id] = el.value;
+  function getBrandIconSvg(id) {
+    if (id === "antigravity") {
+      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/></svg>`;
+    }
+    if (id === "claude") {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>`;
+    }
+    if (id === "cursor") {
+      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l16 7.5-7.2 2.3L10.5 20 4 3z"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 20 7 20 17 12 22 4 17 4 7 12 2"/><circle cx="12" cy="12" r="3"/></svg>`;
+  }
+
+  function getGripSvg() {
+    return `<svg viewBox="0 0 10 14"><circle cx="2.5" cy="2.5" r="1.2"/><circle cx="7.5" cy="2.5" r="1.2"/><circle cx="2.5" cy="7" r="1.2"/><circle cx="7.5" cy="7" r="1.2"/><circle cx="2.5" cy="11.5" r="1.2"/><circle cx="7.5" cy="11.5" r="1.2"/></svg>`;
+  }
+
+  function getColor(remPct) {
+    if (remPct >= 50) return "#16b36e";
+    if (remPct >= 20) return "#f59e0b";
+    return "#ef4462";
+  }
+
+  function shortName(id) {
+    if (id === "antigravity") return "AGY";
+    if (id === "claude") return "Claude";
+    if (id === "cursor") return "Cursor";
+    return "Codex";
+  }
+
+  function toggleCard(cardId) {
+    foldedCards[cardId] = !foldedCards[cardId];
+    saveStateToLocal();
+    if (lastData) render(lastData);
+  }
+
+  function toggleBox(boxId) {
+    foldedBoxes[boxId] = !foldedBoxes[boxId];
+    saveStateToLocal();
+    if (lastData) render(lastData);
+  }
+
+  function toggleAllBoxes() {
+    if (!lastData || !lastData.providers) return;
+    const anyUnfolded = lastData.providers.some(p => !foldedCards[p.id]);
+    lastData.providers.forEach(p => {
+      foldedCards[p.id] = anyUnfolded;
+      (p.boxes || []).forEach(b => { foldedBoxes[b.id] = anyUnfolded; });
     });
+    saveStateToLocal();
+    render(lastData);
+  }
 
-    const orderedProviders = applyClientOrdering(data.providers);
+  async function fetchData(force = false, providerId = "") {
+    try {
+      let qs = "";
+      if (force) qs = providerId ? `?force=1&provider=${encodeURIComponent(providerId)}` : "?force=1";
+      const r = await fetch("/api/quotas" + qs);
+      return await r.json();
+    } catch (e) {
+      return null;
+    }
+  }
 
-    // 1. Mini Bar (matches exact cardOrder)
-    const miniBar = document.getElementById("miniBar");
-    miniBar.innerHTML = orderedProviders.map(p => {
-      if (!p.logged_in) {
-        return `
-          <div class="mini-pill" onclick="openLogin('${p.id}', event)" title="클릭하여 ${p.name} 로그인">
-            <div class="mini-pill-top">
-              <span>${shortName(p.id)}</span>
-              <span style="width:6px;height:6px;border-radius:50%;background:#475569;"></span>
-            </div>
-            <div class="mini-pill-val" style="color:#64748b; font-size:11px;">미연동</div>
-            <div class="mini-progress">
-              <div class="mini-progress-fill" style="width:0%"></div>
-            </div>
-          </div>
-        `;
+  let loginPollTimer = null;
+
+  async function openLogin(providerId, event) {
+    if (event) event.stopPropagation();
+    if (providerId === "claude" || providerId === "cursor") {
+      openPasteBoxes[providerId] = true;
+      if (lastData) render(lastData);
+    }
+    try { await fetch("/api/login/" + providerId, { method: "POST" }); } catch (e) {}
+    if (loginPollTimer) clearInterval(loginPollTimer);
+    let ticks = 0;
+    loginPollTimer = setInterval(async () => {
+      ticks++;
+      await refreshNow(true);
+      if (lastData && lastData.providers) {
+        const p = lastData.providers.find(x => x.id === providerId);
+        if (p && p.logged_in) {
+          clearInterval(loginPollTimer);
+          loginPollTimer = null;
+        }
       }
-      const col = getColor(p.remaining_pct);
-      const grad = getGradient(p.remaining_pct);
-      const m = getDisplayMetric(p.remaining_pct);
+      if (ticks > 45) { clearInterval(loginPollTimer); loginPollTimer = null; }
+    }, 2000);
+  }
+
+  async function submitCodeOrToken(providerId, event) {
+    if (event) event.stopPropagation();
+    const inp = document.getElementById("input_" + providerId);
+    const val = (inp ? inp.value : "").trim();
+    if (!val) return;
+    try {
+      const r = await fetch("/api/submit_code", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({provider_id: providerId, code: val})
+      });
+      const res = await r.json();
+      if (res && res.ok) {
+        openPasteBoxes[providerId] = false;
+        if (inp) inp.value = "";
+        await refreshNow(true);
+      } else {
+        alert("인증에 실패했습니다. 복사한 값을 다시 확인해 주세요.");
+      }
+    } catch (e) {}
+  }
+
+  async function logoutProvider(providerId, event) {
+    if (event) event.stopPropagation();
+    try {
+      await fetch("/api/logout/" + providerId, { method: "POST" });
+      await refreshNow(true);
+    } catch (e) {}
+  }
+
+  function renderCardHtml(p, savedInputs) {
+    const isCardFolded = !!foldedCards[p.id];
+    const chevronFoldClass = isCardFolded ? "folded" : "";
+
+    if (!p.logged_in) {
+      const showPaste = openPasteBoxes[p.id] ? "show" : "";
+      const placeholder = p.id === "claude"
+        ? "로그인 후 화면에 뜬 인증코드 붙여넣기"
+        : "WorkosCursorSessionToken 값 붙여넣기";
+      const needsPaste = (p.id === "claude" || p.id === "cursor");
       return `
-        <div class="mini-pill" onclick="toggleCard('${p.id}')" title="${p.name} 접기/펼치기">
-          <div class="mini-pill-top">
-            <span>${shortName(p.id)}</span>
-            <span style="width:6px;height:6px;border-radius:50%;background:${col};box-shadow:0 0 6px ${col};"></span>
+        <div class="card" data-card-id="${p.id}">
+          <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
+            <div class="provider-left">
+              <span class="drag-grip" title="드래그하여 순서 이동">${getGripSvg()}</span>
+              <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
+              <div class="provider-titles">
+                <span class="provider-name">${p.name}</span>
+                <span class="badge">미연동</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <div class="chevron-badge ${chevronFoldClass}">▾</div>
+            </div>
           </div>
-          <div class="mini-pill-val" style="color:${col}">${m.pct}% <span style="font-size:9.5px;font-weight:600;color:#64748b;">${m.tag}</span></div>
-          <div class="mini-progress">
-            <div class="mini-progress-fill" style="width:${m.width}%; background:${grad}"></div>
+          <div class="card-body ${isCardFolded ? 'folded' : ''}">
+            <div class="login-box">
+              <button class="login-btn" onclick="openLogin('${p.id}', event)">${p.login_label || (p.name + " 로그인")}</button>
+              ${needsPaste ? `
+                <div class="paste-box ${showPaste}" id="paste_${p.id}">
+                  <input class="paste-input" id="input_${p.id}" placeholder="${placeholder}" onclick="event.stopPropagation()" />
+                  <button class="paste-submit" onclick="submitCodeOrToken('${p.id}', event)">연동</button>
+                </div>
+              ` : ""}
+              <div class="login-hint">${p.hint || ""}</div>
+            </div>
           </div>
         </div>
       `;
-    }).join("");
+    }
 
-    // 2. Account Cards & Inner Collapsible Model Group Boxes
-    const container = document.getElementById("cardsContainer");
-    container.innerHTML = orderedProviders.map(p => {
-      const isCardFolded = !!foldedCards[p.id];
-      const chevronFoldClass = isCardFolded ? "folded" : "";
-
-      if (!p.logged_in) {
-        const showPaste = openPasteBoxes[p.id] ? "show" : "";
-        const placeholder = p.id === "claude"
-          ? "로그인 후 화면에 뜬 인증코드 붙여넣기"
-          : "WorkosCursorSessionToken 값 붙여넣기";
-        const needsPaste = (p.id === "claude" || p.id === "cursor");
-
+    const col = getColor(p.remaining_pct);
+    const cardMetric = getDisplayMetric(p.remaining_pct);
+    const boxesHtml = (p.boxes || []).map(box => {
+      const isBoxFolded = !!foldedBoxes[box.id];
+      const bCol = getColor(box.remaining_pct);
+      const boxMetric = getDisplayMetric(box.remaining_pct);
+      const barsHtml = (box.bars || []).map(bar => {
+        const barCol = getColor(bar.remaining_pct);
+        const barMetric = getDisplayMetric(bar.remaining_pct);
         return `
-          <div class="card" data-card-id="${p.id}">
-            <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
-              <div class="provider-left">
-                <span class="drag-grip" title="드래그하여 계정 순서 이동">${getGripSvg()}</span>
-                <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
-                <div class="provider-titles">
-                  <span class="provider-name">${p.name}</span>
-                  <span class="badge">미연동</span>
-                </div>
-              </div>
-              <div class="card-right">
-                <div class="chevron-badge ${chevronFoldClass}">▾</div>
+          <div class="bar-row">
+            <div class="bar-top">
+              <span class="bar-name">${bar.name}</span>
+              <div class="bar-meta">
+                ${bar.reset_text ? `<span class="bar-reset">${bar.reset_text}</span>` : ""}
+                <span class="bar-val" style="color:${barCol}">${barMetric.pct}% ${barMetric.tag}</span>
               </div>
             </div>
-            <div class="card-body ${isCardFolded ? 'folded' : ''}">
-              <div class="login-box">
-                <button class="login-btn" onclick="openLogin('${p.id}', event)">
-                  ${p.login_label || (p.name + " 로그인")}
-                </button>
-                ${needsPaste ? `
-                  <div class="paste-box ${showPaste}" id="paste_${p.id}">
-                    <input class="paste-input" id="input_${p.id}" placeholder="${placeholder}" onclick="event.stopPropagation()" />
-                    <button class="paste-submit" onclick="submitCodeOrToken('${p.id}', event)">연동</button>
-                  </div>
-                ` : ""}
-                <div class="login-hint">${p.hint || ""}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-
-      const col = getColor(p.remaining_pct);
-      const cardMetric = getDisplayMetric(p.remaining_pct);
-      const boxesHtml = (p.boxes || []).map(box => {
-        const isBoxFolded = !!foldedBoxes[box.id];
-        const bCol = getColor(box.remaining_pct);
-        const boxMetric = getDisplayMetric(box.remaining_pct);
-
-        const barsHtml = (box.bars || []).map(bar => {
-          const barCol = getColor(bar.remaining_pct);
-          const barGrad = getGradient(bar.remaining_pct);
-          const barMetric = getDisplayMetric(bar.remaining_pct);
-          return `
-            <div class="bar-row">
-              <div class="bar-top">
-                <span class="bar-name">${bar.name}</span>
-                <div class="bar-meta">
-                  ${bar.reset_text ? `<span class="bar-reset">${bar.reset_text}</span>` : ""}
-                  <span class="bar-val" style="color:${barCol}">${barMetric.pct}% ${barMetric.tag}</span>
-                </div>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${barMetric.width}%; background:${barGrad}"></div>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-        return `
-          <div class="group-box" data-box-id="${box.id}" data-provider-id="${p.id}">
-            <div class="box-header" onpointerdown="startBoxDrag(event, '${p.id}', '${box.id}')">
-              <div class="box-title-wrap">
-                <span class="drag-grip" title="드래그하여 박스 순서 이동">${getGripSvg()}</span>
-                <button class="box-title-btn" onpointerdown="event.stopPropagation()" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능한 모델 목록 보기">
-                  <span>${box.title}</span>
-                  ${box.subtitle ? `<span class="info-dot">ⓘ</span>` : ""}
-                </button>
-              </div>
-              <div class="box-right">
-                <span class="box-pct-badge" style="color:${bCol}">${boxMetric.pct}% ${boxMetric.tag}</span>
-                <span class="box-chevron ${isBoxFolded ? 'folded' : ''}">▾</span>
-              </div>
-            </div>
-            <div class="box-body ${isBoxFolded ? 'folded' : ''}">
-              ${barsHtml}
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${barMetric.width}%; background:${barCol}"></div>
             </div>
           </div>
         `;
       }).join("");
 
       return `
-        <div class="card" data-card-id="${p.id}">
-          <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
-            <div class="provider-left">
-              <span class="drag-grip" title="드래그하여 계정 순서 이동">${getGripSvg()}</span>
-              <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
-              <div class="provider-titles">
-                <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
-                  <span class="provider-name">${p.name}</span>
-                  ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
-                </button>
-                <span class="badge">${p.plan || p.badge || "연동됨"}</span>
-                <button class="provider-refresh-btn" data-refresh-provider="${p.id}" title="수동 새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
-                <button class="logout-btn" title="연동 해제" onpointerdown="event.stopPropagation()" onclick="logoutProvider('${p.id}', event)">✕</button>
-              </div>
+        <div class="group-box" data-box-id="${box.id}" data-provider-id="${p.id}">
+          <div class="box-header" onpointerdown="startBoxDrag(event, '${p.id}', '${box.id}')">
+            <div class="box-title-wrap">
+              <span class="drag-grip" title="드래그하여 박스 순서 이동">${getGripSvg()}</span>
+              <button class="box-title-btn" onpointerdown="event.stopPropagation()" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능한 모델 목록 보기">
+                <span>${box.title}</span>
+                ${box.subtitle ? `<span class="info-dot">ⓘ</span>` : ""}
+              </button>
             </div>
-            <div class="card-right">
-              <div class="pct-pill">
-                <span class="rem-pct" style="color:${col}">${cardMetric.pct}%</span>
-                <span class="rem-label">${cardMetric.summaryTag}</span>
-              </div>
-              <div class="chevron-badge ${chevronFoldClass}">▾</div>
+            <div class="box-right">
+              <span class="box-pct-badge" style="color:${bCol}">${boxMetric.pct}% ${boxMetric.tag}</span>
+              <span class="box-chevron ${isBoxFolded ? 'folded' : ''}">▾</span>
             </div>
           </div>
-          <div class="card-body ${isCardFolded ? 'folded' : ''}">
-            <div class="boxes-list" id="boxes_${p.id}">
-              ${boxesHtml}
-            </div>
+          <div class="box-body ${isBoxFolded ? 'folded' : ''}">
+            ${barsHtml}
           </div>
         </div>
       `;
     }).join("");
+
+    return `
+      <div class="card" data-card-id="${p.id}">
+        <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
+          <div class="provider-left">
+            <span class="drag-grip" title="드래그하여 순서 이동">${getGripSvg()}</span>
+            <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
+            <div class="provider-titles">
+              <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
+                <span class="provider-name">${p.name}</span>
+                ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
+              </button>
+              <span class="badge">${p.plan || p.badge || "연동됨"}</span>
+              <button class="provider-refresh-btn" data-refresh-provider="${p.id}" title="수동 새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
+              <button class="logout-btn" title="연동 해제" onpointerdown="event.stopPropagation()" onclick="logoutProvider('${p.id}', event)">✕</button>
+            </div>
+          </div>
+          <div class="card-right">
+            <div class="pct-pill">
+              <span class="rem-pct" style="color:${col}">${cardMetric.pct}%</span>
+              <span class="rem-label">${cardMetric.summaryTag}</span>
+            </div>
+            <div class="chevron-badge ${chevronFoldClass}">▾</div>
+          </div>
+        </div>
+        <div class="card-body ${isCardFolded ? 'folded' : ''}">
+          <div class="boxes-list" id="boxes_${p.id}">
+            ${boxesHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function render(data) {
+    if (!data || !data.providers || isDragging) return;
+    lastData = data;
+    if (typeof data.notifications_enabled === "boolean") updateNotifyUI(data.notifications_enabled);
+    const upEl = document.getElementById("updatedAt");
+    if (upEl) upEl.textContent = data.updated_at;
+
+    const savedInputs = {};
+    ["claude", "cursor"].forEach(id => {
+      const el = document.getElementById("input_" + id);
+      if (el && el.value) savedInputs[id] = el.value;
+    });
+
+    const pMap = {};
+    data.providers.forEach(p => { pMap[p.id] = p; });
+    const orderedProviders = cardOrder.map(id => pMap[id]).filter(Boolean);
+    data.providers.forEach(p => { if (!cardOrder.includes(p.id)) orderedProviders.push(p); });
+
+    // In compact (mini-widget) mode, hide apps that are NOT logged in!
+    const visibleProviders = compactMode
+      ? orderedProviders.filter(p => p.logged_in)
+      : orderedProviders;
+
+    const miniBar = document.getElementById("miniBar");
+    if (visibleProviders.length === 0 && compactMode) {
+      miniBar.innerHTML = "";
+    } else {
+      miniBar.innerHTML = visibleProviders.map(p => {
+        if (!p.logged_in) {
+          return `
+            <div class="mini-pill" onclick="openLogin('${p.id}', event)">
+              <div class="mini-pill-top">
+                <span>${shortName(p.id)}</span>
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--border-strong);"></span>
+              </div>
+              <div class="mini-pill-val" style="color:var(--text-3);font-size:11.5px;">미연동</div>
+              <div class="mini-progress"><div class="mini-progress-fill" style="width:0%"></div></div>
+            </div>
+          `;
+        }
+        const col = getColor(p.remaining_pct);
+        const m = getDisplayMetric(p.remaining_pct);
+        return `
+          <div class="mini-pill" onclick="toggleCard('${p.id}')">
+            <div class="mini-pill-top">
+              <span>${shortName(p.id)}</span>
+              <span style="width:6px;height:6px;border-radius:50%;background:${col};"></span>
+            </div>
+            <div class="mini-pill-val" style="color:${col}">${m.pct}% <span style="font-size:10px;font-weight:600;color:var(--text-3);">${m.tag}</span></div>
+            <div class="mini-progress"><div class="mini-progress-fill" style="width:${m.width}%;background:${col}"></div></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    const container = document.getElementById("cardsContainer");
+    if (compactMode && visibleProviders.length === 0) {
+      container.innerHTML = `
+        <div class="empty-compact">
+          <div style="font-weight:700;font-size:13px;">연동된 AI 계정이 없습니다</div>
+          <div style="font-size:11.5px;color:var(--text-3);">전체 창으로 확장해 계정을 먼저 연동하세요.</div>
+          <button class="pill-btn active" onclick="toggleCompact()">전체 창으로 확장</button>
+        </div>
+      `;
+    } else {
+      container.innerHTML = visibleProviders.map(p => renderCardHtml(p, savedInputs)).join("");
+    }
+
+    const accContainer = document.getElementById("accountsContainer");
+    if (accContainer) {
+      accContainer.innerHTML = orderedProviders.map(p => renderCardHtml(p, savedInputs)).join("");
+    }
 
     Object.keys(savedInputs).forEach(id => {
       const el = document.getElementById("input_" + id);
@@ -1441,136 +1097,94 @@ UI_HTML = r"""<!DOCTYPE html>
     applyCooldownUI();
   }
 
-  // =========================================================================
-  // POINTER DRAG-AND-DROP FOR ACCOUNT CARDS & INNER MODEL BOXES
-  // =========================================================================
   function startCardDrag(e, cardId) {
-    if (e.button !== 0) return;
-    if (e.target.closest("button") || e.target.closest("input")) return;
-
-    const container = document.getElementById("cardsContainer");
-    const cardEl = container.querySelector(`.card[data-card-id="${cardId}"]`);
-    if (!cardEl) return;
-
+    if (e.button !== 0 || e.target.closest("button") || e.target.closest("input")) return;
+    const cardEl = e.currentTarget.closest(".card");
+    const container = cardEl.parentElement;
+    if (!cardEl || !container) return;
     const startY = e.clientY;
     let moved = false;
 
-    function onMove(ev) {
-      if (Math.abs(ev.clientY - startY) > 5) {
-        if (!moved) {
-          moved = true;
-          isDragging = true;
-          cardEl.classList.add("dragging");
-        }
-        const siblings = Array.from(container.querySelectorAll(".card"));
-        for (const sib of siblings) {
-          if (sib === cardEl) continue;
-          const rect = sib.getBoundingClientRect();
-          const midY = rect.top + rect.height / 2;
-          if (ev.clientY < midY && cardEl.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_PRECEDING) {
-            container.insertBefore(cardEl, sib);
-            break;
-          } else if (ev.clientY > midY && cardEl.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING) {
-            container.insertBefore(cardEl, sib.nextSibling);
-            break;
-          }
-        }
+    const onMove = (ev) => {
+      if (!moved && Math.abs(ev.clientY - startY) < 6) return;
+      if (!moved) { moved = true; isDragging = true; cardEl.classList.add("dragging"); }
+      const cards = Array.from(container.querySelectorAll(".card")).filter(el => el !== cardEl);
+      for (const other of cards) {
+        const rect = other.getBoundingClientRect();
+        if (ev.clientY < rect.top + rect.height / 2) { container.insertBefore(cardEl, other); return; }
       }
-    }
+      container.appendChild(cardEl);
+    };
 
-    function onUp() {
+    const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      if (!moved) { toggleCard(cardId); return; }
       cardEl.classList.remove("dragging");
-
-      if (!moved) {
-        isDragging = false;
-        toggleCard(cardId);
-      } else {
-        cardOrder = Array.from(container.querySelectorAll(".card")).map(el => el.getAttribute("data-card-id"));
-        isDragging = false;
-        syncOrderToBackend();
-        if (lastData) render(lastData);
-      }
-    }
-
+      isDragging = false;
+      cardOrder = Array.from(container.querySelectorAll(".card")).map(el => el.dataset.cardId);
+      syncOrderToBackend();
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
 
   function startBoxDrag(e, providerId, boxId) {
+    if (e.button !== 0 || e.target.closest("button")) return;
     e.stopPropagation();
-    if (e.button !== 0) return;
-
-    const listEl = document.getElementById("boxes_" + providerId);
-    if (!listEl) return;
-    const boxEl = listEl.querySelector(`.group-box[data-box-id="${boxId}"]`);
-    if (!boxEl) return;
-
+    const boxEl = e.currentTarget.closest(".group-box");
+    const listEl = boxEl.parentElement;
+    if (!boxEl || !listEl) return;
     const startY = e.clientY;
     let moved = false;
 
-    function onMove(ev) {
-      if (Math.abs(ev.clientY - startY) > 5) {
-        if (!moved) {
-          moved = true;
-          isDragging = true;
-          boxEl.classList.add("dragging");
-        }
-        const siblings = Array.from(listEl.querySelectorAll(".group-box"));
-        for (const sib of siblings) {
-          if (sib === boxEl) continue;
-          const rect = sib.getBoundingClientRect();
-          const midY = rect.top + rect.height / 2;
-          if (ev.clientY < midY && boxEl.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_PRECEDING) {
-            listEl.insertBefore(boxEl, sib);
-            break;
-          } else if (ev.clientY > midY && boxEl.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING) {
-            listEl.insertBefore(boxEl, sib.nextSibling);
-            break;
-          }
-        }
+    const onMove = (ev) => {
+      if (!moved && Math.abs(ev.clientY - startY) < 6) return;
+      if (!moved) { moved = true; isDragging = true; boxEl.classList.add("dragging"); }
+      const boxes = Array.from(listEl.querySelectorAll(".group-box")).filter(el => el !== boxEl);
+      for (const other of boxes) {
+        const rect = other.getBoundingClientRect();
+        if (ev.clientY < rect.top + rect.height / 2) { listEl.insertBefore(boxEl, other); return; }
       }
-    }
+      listEl.appendChild(boxEl);
+    };
 
-    function onUp() {
+    const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      if (!moved) { toggleBox(boxId); return; }
       boxEl.classList.remove("dragging");
-
-      if (!moved) {
-        isDragging = false;
-        toggleBox(boxId);
-      } else {
-        boxOrder[providerId] = Array.from(listEl.querySelectorAll(".group-box")).map(el => el.getAttribute("data-box-id"));
-        isDragging = false;
-        syncOrderToBackend();
-        if (lastData) render(lastData);
-      }
-    }
-
+      isDragging = false;
+      boxOrder[providerId] = Array.from(listEl.querySelectorAll(".group-box")).map(el => el.dataset.boxId);
+      syncOrderToBackend();
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
 
+  async function syncOrderToBackend() {
+    saveStateToLocal();
+    try {
+      await fetch("/api/save_order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({card_order: cardOrder, box_order: boxOrder})
+      });
+    } catch (e) {}
+  }
+
   async function refreshNow(force = false, providerId = "") {
     if (isDragging) return;
-    if (document.activeElement && document.activeElement.tagName === "INPUT") {
-      return;
-    }
-    const dot = document.getElementById("pulseDot");
-    if (dot) dot.style.background = "#38bdf8";
+    if (document.activeElement && document.activeElement.tagName === "INPUT") return;
     const data = await fetchData(force, providerId);
     if (data) render(data);
-    setTimeout(() => { if (dot) dot.style.background = "#10b981"; }, 300);
   }
 
   async function toggleCompact() {
     compactMode = !compactMode;
     document.body.classList.toggle("compact", compactMode);
-    const btn = document.getElementById("btnCompact");
-    btn.textContent = compactMode ? "확장" : "미니바";
-    btn.classList.toggle("active", compactMode);
+    if (compactMode) switchTab("dashboard");
+    if (lastData) render(lastData);
     try {
       await fetch("/api/window", {
         method: "POST",
@@ -1582,7 +1196,11 @@ UI_HTML = r"""<!DOCTYPE html>
 
   async function togglePin() {
     alwaysOnTop = !alwaysOnTop;
-    document.getElementById("btnPin").classList.toggle("active", alwaysOnTop);
+    const btn = document.getElementById("btnPin");
+    if (btn) {
+      btn.classList.toggle("active", alwaysOnTop);
+      btn.textContent = alwaysOnTop ? "고정 켜짐" : "꺼짐";
+    }
     try {
       await fetch("/api/window", {
         method: "POST",
@@ -1593,26 +1211,18 @@ UI_HTML = r"""<!DOCTYPE html>
   }
 
   function escapeHtml(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
   function showInfoModal(title, bodyHtml) {
-    const backdrop = document.getElementById("infoModalBackdrop");
-    const titleEl = document.getElementById("infoModalTitle");
-    const bodyEl = document.getElementById("infoModalBody");
-    if (titleEl) titleEl.textContent = title;
-    if (bodyEl) bodyEl.innerHTML = bodyHtml;
-    if (backdrop) backdrop.classList.add("show");
+    document.getElementById("infoModalTitle").textContent = title;
+    document.getElementById("infoModalBody").innerHTML = bodyHtml;
+    document.getElementById("infoModalBackdrop").classList.add("show");
   }
 
   function closeInfoModal(e) {
     if (e && e.target && e.target.id !== "infoModalBackdrop") return;
-    const backdrop = document.getElementById("infoModalBackdrop");
-    if (backdrop) backdrop.classList.remove("show");
+    document.getElementById("infoModalBackdrop").classList.remove("show");
   }
 
   function openBoxModelsModal(providerId, boxId, e) {
@@ -1625,14 +1235,10 @@ UI_HTML = r"""<!DOCTYPE html>
     let items = Array.isArray(box.models) && box.models.length ? box.models : [];
     if (!items.length) {
       const raw = (box.subtitle || "").trim();
-      items = raw
-        ? raw.split(/[,·]+/).map(s => s.trim()).filter(Boolean)
-        : [(box.title || "모델 정보 없음")];
+      items = raw ? raw.split(/[,·]+/).map(s => s.trim()).filter(Boolean) : [(box.title || "모델 정보 없음")];
     }
     let html = items.map(m => `<div class="info-modal-item">• ${escapeHtml(m)}</div>`).join("");
-    if (box.note) {
-      html += `<div class="info-modal-note">${escapeHtml(box.note)}</div>`;
-    }
+    if (box.note) html += `<div class="info-modal-note">${escapeHtml(box.note)}</div>`;
     showInfoModal(`${box.title} — 사용 가능 모델`, html);
   }
 
@@ -1645,26 +1251,12 @@ UI_HTML = r"""<!DOCTYPE html>
     const account = p.account || "연동된 계정 정보 없음";
     const resetTxt = p.reset_text || "실시간 연동";
     let html = `
-      <div class="info-modal-row">
-        <span class="info-modal-label">로그인 계정</span>
-        <span class="info-modal-val">${escapeHtml(account)}</span>
-      </div>
-      <div class="info-modal-row">
-        <span class="info-modal-label">플랜</span>
-        <span class="info-modal-val">${escapeHtml(plan)}</span>
-      </div>
-      <div class="info-modal-row">
-        <span class="info-modal-label">실행 상태</span>
-        <span class="info-modal-val" style="color:${p.running ? '#10b981' : '#94a3b8'}">${p.running ? '● 실행 중' : '미실행'}</span>
-      </div>
-      <div class="info-modal-row">
-        <span class="info-modal-label">갱신 / 리셋</span>
-        <span class="info-modal-val">${escapeHtml(resetTxt)}</span>
-      </div>
+      <div class="info-modal-row"><span class="info-modal-label">로그인 계정</span><span class="info-modal-val">${escapeHtml(account)}</span></div>
+      <div class="info-modal-row"><span class="info-modal-label">플랜</span><span class="info-modal-val">${escapeHtml(plan)}</span></div>
+      <div class="info-modal-row"><span class="info-modal-label">실행 상태</span><span class="info-modal-val" style="color:${p.running ? 'var(--ok)' : 'var(--text-3)'}">${p.running ? '● 실행 중' : '미실행'}</span></div>
+      <div class="info-modal-row"><span class="info-modal-label">갱신 / 리셋</span><span class="info-modal-val">${escapeHtml(resetTxt)}</span></div>
     `;
-    if (p.note) {
-      html += `<div class="info-modal-note">${escapeHtml(p.note)}</div>`;
-    }
+    if (p.note) html += `<div class="info-modal-note">${escapeHtml(p.note)}</div>`;
     showInfoModal(`${p.name} 계정 정보`, html);
   }
 
@@ -1678,17 +1270,16 @@ UI_HTML = r"""<!DOCTYPE html>
     let anyActive = false;
 
     const gBtn = document.getElementById("btnGlobalRefresh");
-    if (gBtn) {
-      const remMs = globalCooldownEnd - now;
-      if (remMs > 0) {
-        anyActive = true;
-        const sec = Math.ceil(remMs / 1000);
-        gBtn.disabled = true;
-        gBtn.textContent = `${sec}`;
-      } else {
-        gBtn.disabled = false;
-        gBtn.innerHTML = GLOBAL_REFRESH_SVG;
-      }
+    const gcBtn = document.getElementById("btnGlobalRefreshCompact");
+    const remMsG = globalCooldownEnd - now;
+    if (remMsG > 0) {
+      anyActive = true;
+      const sec = Math.ceil(remMsG / 1000);
+      if (gBtn) { gBtn.disabled = true; gBtn.textContent = `${sec}s`; }
+      if (gcBtn) { gcBtn.disabled = true; gcBtn.textContent = `${sec}`; }
+    } else {
+      if (gBtn) { gBtn.disabled = false; gBtn.innerHTML = `${GLOBAL_REFRESH_SVG}<span>새로고침</span>`; }
+      if (gcBtn) { gcBtn.disabled = false; gcBtn.innerHTML = GLOBAL_REFRESH_SVG; }
     }
 
     document.querySelectorAll(".provider-refresh-btn[data-refresh-provider]").forEach(btn => {
@@ -1696,9 +1287,8 @@ UI_HTML = r"""<!DOCTYPE html>
       const remMs = (providerCooldownEnd[pid] || 0) - now;
       if (remMs > 0) {
         anyActive = true;
-        const sec = Math.ceil(remMs / 1000);
         btn.disabled = true;
-        btn.textContent = `${sec}`;
+        btn.textContent = `${Math.ceil(remMs / 1000)}`;
       } else {
         btn.disabled = false;
         btn.textContent = "↻";
@@ -1713,9 +1303,7 @@ UI_HTML = r"""<!DOCTYPE html>
 
   function ensureCooldownTick() {
     applyCooldownUI();
-    if (!cooldownTickTimer) {
-      cooldownTickTimer = setInterval(applyCooldownUI, 200);
-    }
+    if (!cooldownTickTimer) cooldownTickTimer = setInterval(applyCooldownUI, 200);
   }
 
   async function manualGlobalRefresh() {
@@ -1733,9 +1321,7 @@ UI_HTML = r"""<!DOCTYPE html>
     await refreshNow(true, providerId);
   }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeInfoModal();
-  });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInfoModal(); });
 
   let updatePollTimer = null;
 
@@ -1755,14 +1341,13 @@ UI_HTML = r"""<!DOCTYPE html>
         if (banner) banner.classList.add("show");
       } else if (manual) {
         const up = document.getElementById("updatedAt");
-        if (up) up.textContent = `최신 버전 (v${info.current_version})`;
+        if (up) up.textContent = `최신 v${info.current_version}`;
       }
     } catch (e) {}
   }
 
   function dismissUpdateBanner() {
-    const banner = document.getElementById("updateBanner");
-    if (banner) banner.classList.remove("show");
+    document.getElementById("updateBanner")?.classList.remove("show");
   }
 
   async function triggerUpdate() {
@@ -1800,8 +1385,7 @@ UI_HTML = r"""<!DOCTYPE html>
   });
 </script>
 </body>
-</html>
-"""
+</html>"""
 
 
 def _close_all_popup_procs():
@@ -2209,7 +1793,10 @@ class WidgetApi:
         save_config({"compact_mode": bool(compact)})
         if self.window:
             try:
-                self.window.resize(440, 150 if compact else 740)
+                if compact:
+                    self.window.resize(420, 560)
+                else:
+                    self.window.resize(840, 640)
             except Exception:
                 pass
         return True
@@ -2365,6 +1952,20 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             threading.Timer(0.3, _close_all_popup_procs).start()
             return
 
+        if parsed.path == "/assets/icon.png":
+            base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+            icon_p = base / "assets" / "icon.png"
+            if not icon_p.exists():
+                icon_p = Path(__file__).resolve().parent / "assets" / "icon.png"
+            if icon_p.exists():
+                data = icon_p.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Cache-Control", "max-age=3600")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+
         body = UI_HTML.replace("__APP_VERSION__", APP_VERSION).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -2443,10 +2044,9 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
                         if hwnd:
                             rect = wintypes.RECT()
                             user32.GetWindowRect(hwnd, ctypes.byref(rect))
-                            cur_w = max(440, rect.right - rect.left)
-                            scale = cur_w / 440.0
-                            target_h = int((155 if compact else 740) * scale)
-                            user32.SetWindowPos(hwnd, 0, 0, 0, cur_w, target_h, 0x0002 | 0x0004 | 0x0010)
+                            target_w = 420 if compact else 840
+                            target_h = 560 if compact else 640
+                            user32.SetWindowPos(hwnd, 0, 0, 0, target_w, target_h, 0x0002 | 0x0004 | 0x0010)
                     except Exception:
                         pass
                 else:
@@ -2733,13 +2333,13 @@ def main():
         window = webview.create_window(
             title=APP_NAME,
             url=url,
-            width=468,
-            height=740,
-            x=40,
-            y=60,
+            width=920,
+            height=660,
+            x=80,
+            y=80,
             resizable=True,
-            on_top=bool(cfg.get("always_on_top", True)),
-            background_color="#080a0f",
+            on_top=bool(cfg.get("always_on_top", False)),
+            background_color="#10121f",
         )
         GLOBAL_API.window = window
 
