@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 if not exist ".venv\Scripts\python.exe" (
-    echo [TokenChecker] Setting up Python virtual environment...
+    echo [NoopToken] Setting up Python virtual environment...
     where uv >nul 2>nul
     if %errorlevel% equ 0 (
         uv venv .venv

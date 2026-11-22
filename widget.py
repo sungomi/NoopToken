@@ -72,20 +72,19 @@ UI_HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TokenChecker</title>
+<title>NoopToken</title>
 <style>
   :root {
-    --bg: #080a0f;
-    --bg-glow: rgba(56, 189, 248, 0.06);
-    --card-bg: rgba(18, 23, 34, 0.88);
-    --card-border: rgba(255, 255, 255, 0.075);
-    --card-border-hover: rgba(255, 255, 255, 0.14);
-    --box-bg: rgba(10, 13, 20, 0.68);
-    --box-border: rgba(255, 255, 255, 0.055);
-    --text: #f8fafc;
-    --text-sub: #cbd5e1;
-    --muted: #64748b;
-    --accent: #38bdf8;
+    --bg: #0b0d11;
+    --card-bg: #12151c;
+    --card-border: rgba(255, 255, 255, 0.07);
+    --card-border-hover: rgba(255, 255, 255, 0.13);
+    --box-bg: #0d1016;
+    --box-border: rgba(255, 255, 255, 0.05);
+    --text: #f3f4f6;
+    --text-sub: #d1d5db;
+    --muted: #6b7280;
+    --accent: #e5e7eb;
   }
   * {
     box-sizing: border-box;
@@ -96,9 +95,8 @@ UI_HTML = r"""<!DOCTYPE html>
   }
   body {
     background-color: var(--bg);
-    background-image: radial-gradient(ellipse 90% 40% at 50% -10%, var(--bg-glow), transparent);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Pretendard", "Segoe UI", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Pretendard", "Segoe UI", sans-serif;
     font-size: 12.5px;
     font-variant-numeric: tabular-nums;
     overflow-x: hidden;
@@ -120,37 +118,37 @@ UI_HTML = r"""<!DOCTYPE html>
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 16px 10px 16px;
-    background: rgba(8, 10, 15, 0.86);
+    padding: 11px 16px;
+    background: rgba(11, 13, 17, 0.92);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     position: sticky;
     top: 0;
     z-index: 30;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     white-space: nowrap;
   }
   .title-area {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 700;
-    font-size: 13.5px;
-    letter-spacing: -0.02em;
-    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: -0.015em;
+    color: #f3f4f6;
     white-space: nowrap;
     flex-shrink: 0;
     word-break: keep-all;
   }
   .app-logo-badge {
-    width: 21px;
-    height: 21px;
+    width: 22px;
+    height: 22px;
     border-radius: 6px;
-    background: linear-gradient(135deg, #06b6d4 0%, #10b981 50%, #6366f1 100%);
+    background: #171b24;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     flex-shrink: 0;
   }
   .app-logo-badge svg {
@@ -235,40 +233,40 @@ UI_HTML = r"""<!DOCTYPE html>
     white-space: nowrap;
   }
   .ctrl-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #94a3b8;
-    border-radius: 7px;
-    height: 26px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: #9ca3af;
+    border-radius: 6px;
+    height: 25px;
     padding: 0 7.5px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    transition: all 0.16s ease;
+    transition: all 0.14s ease;
     white-space: nowrap;
     flex-shrink: 0;
     word-break: keep-all;
     line-height: 1;
   }
   .ctrl-btn:hover {
-    color: #f8fafc;
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.16);
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
   }
   .ctrl-btn:disabled {
-    opacity: 0.65;
+    opacity: 0.6;
     cursor: default;
-    color: #38bdf8;
+    color: #e5e7eb;
     min-width: 28px;
   }
   .ctrl-btn.active {
-    color: #38bdf8;
-    border-color: rgba(56, 189, 248, 0.4);
-    background: rgba(56, 189, 248, 0.12);
+    color: #f3f4f6;
+    border-color: rgba(255, 255, 255, 0.18);
+    background: #1b202b;
   }
   .ctrl-btn svg {
     width: 12px;
@@ -289,20 +287,19 @@ UI_HTML = r"""<!DOCTYPE html>
     padding: 10px 14px 4px 14px;
   }
   .mini-pill {
-    background: linear-gradient(180deg, rgba(24, 30, 44, 0.78) 0%, rgba(15, 19, 29, 0.88) 100%);
+    background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 10px;
-    padding: 7px 8px;
+    border-radius: 9px;
+    padding: 8px 9px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
-    transition: all 0.16s ease;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: border-color 0.14s ease, background 0.14s ease;
   }
   .mini-pill:hover {
     border-color: var(--card-border-hover);
-    transform: translateY(-1px);
+    background: #161a23;
   }
   .mini-pill-top {
     display: flex;
@@ -345,15 +342,14 @@ UI_HTML = r"""<!DOCTYPE html>
   }
 
   .card {
-    background: linear-gradient(180deg, rgba(22, 28, 42, 0.86) 0%, rgba(14, 18, 28, 0.94) 100%);
+    background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 13px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-radius: 11px;
     overflow: hidden;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+    transition: border-color 0.16s ease;
   }
   .card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--card-border-hover);
   }
   .card.dragging {
     opacity: 0.92;
@@ -960,13 +956,12 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="header pywebview-drag-region">
     <div class="title-area">
       <span class="app-logo-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9" stroke-opacity="0.45" />
-          <path d="M8.5 12.2l2.3 2.3 4.8-5" />
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.5 17.5a8.5 8.5 0 1 1 13 0" stroke="#34d399" stroke-width="2" stroke-opacity="0.85" />
+          <path d="M9 15.5V8.5l6 7V8.5" stroke="#f3f4f6" stroke-width="2.1" />
         </svg>
       </span>
-      <span class="live-indicator" id="pulseDot"></span>
-      <span id="appTitleText">TokenChecker</span>
+      <span id="appTitleText">NoopToken</span>
     </div>
     <div class="controls">
       <button class="ctrl-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()" title="사용량(%) / 잔여량(%) 표시 기준 전환">사용량 기준</button>
@@ -993,7 +988,7 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="footer">
     <span style="display:inline-flex;align-items:center;gap:6px;">
       <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
-      <span class="notify-pill active" id="btnNotify" onclick="toggleNotifications()" title="한도 80%·90% 도달 및 리셋 데스크톱 알림 켜기/끄기">🔔 알림</span>
+      <span class="notify-pill active" id="btnNotify" onclick="toggleNotifications()" title="한도 80%·90% 도달 및 리셋 데스크톱 알림 켜기/끄기">알림 켜짐</span>
     </span>
     <span id="updatedAt">동기화 중...</span>
   </div>
@@ -1033,7 +1028,7 @@ UI_HTML = r"""<!DOCTYPE html>
   function updateModeHeaderUI() {
     const btn = document.getElementById("btnDisplayMode");
     const titleEl = document.getElementById("appTitleText");
-    if (titleEl) titleEl.textContent = "TokenChecker";
+    if (titleEl) titleEl.textContent = "NoopToken";
     if (displayMode === "used") {
       if (btn) {
         btn.textContent = "사용량 기준";
@@ -1246,7 +1241,7 @@ UI_HTML = r"""<!DOCTYPE html>
     const btn = document.getElementById("btnNotify");
     if (!btn) return;
     btn.classList.toggle("active", notifyEnabled);
-    btn.textContent = notifyEnabled ? "🔔 알림" : "🔕 꺼짐";
+    btn.textContent = notifyEnabled ? "알림 켜짐" : "알림 꺼짐";
   }
 
   async function toggleNotifications() {
@@ -1564,10 +1559,10 @@ UI_HTML = r"""<!DOCTYPE html>
       return;
     }
     const dot = document.getElementById("pulseDot");
-    dot.style.background = "#38bdf8";
+    if (dot) dot.style.background = "#38bdf8";
     const data = await fetchData(force, providerId);
     if (data) render(data);
-    setTimeout(() => { dot.style.background = "#10b981"; }, 300);
+    setTimeout(() => { if (dot) dot.style.background = "#10b981"; }, 300);
   }
 
   async function toggleCompact() {
@@ -1901,7 +1896,7 @@ def _open_floating_chrome_popup(url: str, isolated_closeable: bool = True):
         if os.path.exists(b):
             try:
                 if isolated_closeable:
-                    tmp_dir = tempfile.mkdtemp(prefix="tokenchecker_login_")
+                    tmp_dir = tempfile.mkdtemp(prefix="nooptoken_login_")
                     proc = subprocess.Popen(
                         [
                             b,
@@ -2090,7 +2085,7 @@ def _get_runtime_dir() -> Path:
     if platform.system() == "Windows":
         local_app = os.environ.get("LOCALAPPDATA", "")
         base = Path(local_app) if local_app else (Path.home() / "AppData/Local")
-        d = base / "TokenChecker"
+        d = base / "NoopToken"
         d.mkdir(parents=True, exist_ok=True)
         return d
     return Path.home()
@@ -2098,7 +2093,7 @@ def _get_runtime_dir() -> Path:
 
 def _setup_logging(cli_mode: bool = False) -> Path:
     rt_dir = _get_runtime_dir()
-    log_path = rt_dir / ("widget.log" if platform.system() == "Windows" else ".tokenchecker.log")
+    log_path = rt_dir / ("widget.log" if platform.system() == "Windows" else ".nooptoken.log")
     try:
         if not cli_mode:
             log_file = open(log_path, "a", encoding="utf-8", buffering=1)
@@ -2120,7 +2115,7 @@ def _setup_logging(cli_mode: bool = False) -> Path:
 def _cleanup_previous_instance() -> None:
     """Terminates any previous stuck/zombie instance of TokenChecker before starting."""
     rt_dir = _get_runtime_dir()
-    pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".tokenchecker.pid")
+    pid_path = rt_dir / ("widget.pid" if platform.system() == "Windows" else ".nooptoken.pid")
     my_pid = os.getpid()
 
     if pid_path.exists():

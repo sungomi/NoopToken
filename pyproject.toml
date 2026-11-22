@@ -1,7 +1,7 @@
 [project]
-name = "tokenchecker"
-version = "1.3.0"
-description = "토큰체커 (TokenChecker) — Cross-platform (macOS & Windows) floating desktop widget for monitoring official AI coding agent usage & quotas (Antigravity, Claude, Cursor, ChatGPT/Codex)."
+name = "nooptoken"
+version = "1.4.0"
+description = "NoopToken — Cross-platform (macOS & Windows) floating desktop widget for monitoring official AI coding agent usage & quotas (Antigravity, Claude, Cursor, ChatGPT/Codex)."
 readme = "README.md"
 authors = [
     { name = "sungomi", email = "353765157+sungomi@users.noreply.github.com" }
@@ -14,4 +14,4 @@ dependencies = [
 ]
 
 [project.scripts]
-tokenchecker = "widget:main"
+nooptoken = "widget:main"

@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_PATH="/Applications/TokenChecker.app"
+APP_PATH="/Applications/NoopToken.app"
 
-echo "[TokenChecker] Installing macOS application bundle to $APP_PATH..."
+echo "[NoopToken] Installing macOS application bundle to $APP_PATH..."
 mkdir -p "$APP_PATH/Contents/MacOS"
 mkdir -p "$APP_PATH/Contents/Resources"
 
@@ -21,15 +21,15 @@ cat > "$APP_PATH/Contents/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>icon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.sungomi.tokenchecker</string>
+    <string>com.sungomi.nooptoken</string>
     <key>CFBundleName</key>
-    <string>TokenChecker</string>
+    <string>NoopToken</string>
     <key>CFBundleDisplayName</key>
-    <string>TokenChecker</string>
+    <string>NoopToken</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.3.0</string>
+    <string>1.4.0</string>
     <key>LSHighResolutionCapable</key>
     <true/>
 </dict>

@@ -25,7 +25,7 @@ if is_mac:
         a.scripts,
         [],
         exclude_binaries=True,
-        name="TokenChecker",
+        name="NoopToken",
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
@@ -45,13 +45,13 @@ if is_mac:
         strip=False,
         upx=True,
         upx_exclude=[],
-        name="TokenChecker",
+        name="NoopToken",
     )
     app = BUNDLE(
         coll,
-        name="TokenChecker.app",
+        name="NoopToken.app",
         icon=icon_file,
-        bundle_identifier="com.sungomi.tokenchecker",
+        bundle_identifier="com.sungomi.nooptoken",
     )
 else:
     exe = EXE(
@@ -60,7 +60,7 @@ else:
         a.binaries,
         a.datas,
         [],
-        name="TokenChecker",
+        name="NoopToken",
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,

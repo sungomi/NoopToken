@@ -1,4 +1,4 @@
-name: Build & Release TokenChecker
+name: Build & Release NoopToken
 
 on:
   push:
@@ -21,17 +21,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
-      - name: Build TokenChecker.app & DMG
+      - name: Build NoopToken.app & DMG
         run: |
-          pyinstaller --noconfirm --clean TokenChecker.spec
+          pyinstaller --noconfirm --clean NoopToken.spec
           mkdir -p dist/dmg_root
-          cp -R "dist/TokenChecker.app" dist/dmg_root/
+          cp -R "dist/NoopToken.app" dist/dmg_root/
           ln -s /Applications dist/dmg_root/Applications
-          hdiutil create -volname "TokenChecker" -srcfolder dist/dmg_root -ov -format UDZO "dist/TokenChecker-macOS.dmg"
+          hdiutil create -volname "NoopToken" -srcfolder dist/dmg_root -ov -format UDZO "dist/NoopToken-macOS.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: TokenChecker-macOS
-          path: dist/TokenChecker-macOS.dmg
+          name: NoopToken-macOS
+          path: dist/NoopToken-macOS.dmg
 
   build-windows:
     runs-on: windows-latest
@@ -44,14 +44,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
-      - name: Build TokenChecker.exe
+      - name: Build NoopToken.exe
         run: |
-          pyinstaller --noconfirm --clean TokenChecker.spec
-          copy dist\TokenChecker.exe dist\TokenChecker-Windows.exe
+          pyinstaller --noconfirm --clean NoopToken.spec
+          copy dist\NoopToken.exe dist\NoopToken-Windows.exe
       - uses: actions/upload-artifact@v4
         with:
-          name: TokenChecker-Windows
-          path: dist/TokenChecker-Windows.exe
+          name: NoopToken-Windows
+          path: dist/NoopToken-Windows.exe
 
   release:
     needs: [build-macos, build-windows]
@@ -65,6 +65,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/TokenChecker-macOS/TokenChecker-macOS.dmg
-            artifacts/TokenChecker-Windows/TokenChecker-Windows.exe
+            artifacts/NoopToken-macOS/NoopToken-macOS.dmg
+            artifacts/NoopToken-Windows/NoopToken-Windows.exe
           generate_release_notes: true

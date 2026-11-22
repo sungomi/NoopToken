@@ -14,13 +14,14 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-CONFIG_PATH = Path.home() / ".tokenchecker.json"
-_LEGACY_CONFIG_PATH = Path.home() / ".ai_quota_widget.json"
-if not CONFIG_PATH.exists() and _LEGACY_CONFIG_PATH.exists():
-    try:
-        CONFIG_PATH.write_text(_LEGACY_CONFIG_PATH.read_text(encoding="utf-8"), encoding="utf-8")
-    except Exception:
-        pass
+CONFIG_PATH = Path.home() / ".nooptoken.json"
+for _legacy in (Path.home() / ".tokenchecker.json", Path.home() / ".ai_quota_widget.json"):
+    if not CONFIG_PATH.exists() and _legacy.exists():
+        try:
+            CONFIG_PATH.write_text(_legacy.read_text(encoding="utf-8"), encoding="utf-8")
+            break
+        except Exception:
+            pass
 
 # 1. Antigravity Official OAuth Scopes (Client ID/Secret discovered from local Antigravity installation or config)
 AGY_SCOPES = [
@@ -1076,16 +1077,16 @@ def _check_and_notify_thresholds(providers_list: List[Dict[str, Any]], cfg: Dict
 
                 if prev_used >= 50.0 and used <= 5.0:
                     _NOTIFIED_LEVEL[key] = 0
-                    _send_os_notification("TokenChecker", f"{pname} · {bname} 한도가 리셋되었습니다.")
+                    _send_os_notification("NoopToken", f"{pname} · {bname} 한도가 리셋되었습니다.")
                     continue
 
                 lvl = _NOTIFIED_LEVEL.get(key, 0)
                 if used >= 90.0 and lvl < 90:
                     _NOTIFIED_LEVEL[key] = 90
-                    _send_os_notification("TokenChecker 경고", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
+                    _send_os_notification("NoopToken 경고", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
                 elif used >= 80.0 and lvl < 80:
                     _NOTIFIED_LEVEL[key] = 80
-                    _send_os_notification("TokenChecker 알림", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
+                    _send_os_notification("NoopToken 알림", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
                 elif used < 75.0 and lvl > 0:
                     _NOTIFIED_LEVEL[key] = 0
 

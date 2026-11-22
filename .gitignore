@@ -15,11 +15,12 @@ venv/
 Thumbs.db
 *.app/
 *.spec
-!TokenChecker.spec
+!NoopToken.spec
 *.dmg
 *.exe
 assets/icon.iconset/
 
 # User local credentials (never commit)
+.nooptoken.json
 .tokenchecker.json
 .ai_quota_widget.json

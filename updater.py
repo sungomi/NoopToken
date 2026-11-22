@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 import requests
 
-APP_NAME = "TokenChecker"
-APP_EN_NAME = "TokenChecker"
-APP_VERSION = "1.3.0"
-GITHUB_REPO = "sungomi/TokenChecker"
+APP_NAME = "NoopToken"
+APP_EN_NAME = "NoopToken"
+APP_VERSION = "1.4.0"
+GITHUB_REPO = "sungomi/NoopToken"
 
 _CACHE_LOCK = threading.Lock()
 _CHECK_CACHE: Dict[str, Any] = {"ts": 0.0, "data": None}
@@ -277,11 +277,11 @@ def start_update() -> Dict[str, Any]:
         return get_update_status()
 
     asset_url = info["asset_url"]
-    asset_name = info["asset_name"] or ("TokenChecker-macOS.dmg" if platform.system() == "Darwin" else "TokenChecker-Windows.exe")
+    asset_name = info["asset_name"] or ("NoopToken-macOS.dmg" if platform.system() == "Darwin" else "NoopToken-Windows.exe")
     _set_status("downloading", 0, "업데이트 다운로드 준비 중...")
 
     def _worker():
-        tmp_dir = Path(tempfile.mkdtemp(prefix="tokenchecker_upd_"))
+        tmp_dir = Path(tempfile.mkdtemp(prefix="nooptoken_upd_"))
         try:
             dest_path = tmp_dir / asset_name
             _download_file(asset_url, dest_path)
