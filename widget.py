@@ -524,6 +524,64 @@ UI_HTML = r"""<!DOCTYPE html>
     padding: 22px 16px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;
   }
 
+  /* Dashboard Briefing Strip & Accounts List */
+  .briefing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .briefing-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .briefing-label { font-size: 11px; color: var(--text-3); font-weight: 600; }
+  .briefing-value { font-size: 14px; font-weight: 750; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .briefing-sub { font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .delta-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+  .delta-tag.up { color: var(--warn); }
+  .delta-tag.down { color: var(--ok); }
+
+  .accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  @media (max-width: 720px) {
+    .briefing-grid, .accounts-grid { grid-template-columns: 1fr; }
+  }
+  .account-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .account-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .account-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .account-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .account-title { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .account-sub { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .account-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
   /* Modal */
   .info-modal-backdrop {
     position: fixed; inset: 0; background: rgba(10, 12, 22, 0.55);
@@ -639,12 +697,13 @@ UI_HTML = r"""<!DOCTYPE html>
       </div>
 
       <section class="view-panel active" id="viewDashboard">
+        <div class="briefing-grid" id="briefingGrid"></div>
         <div class="mini-bar" id="miniBar"></div>
         <div class="cards" id="cardsContainer"></div>
       </section>
 
       <section class="view-panel" id="viewAccounts">
-        <div class="cards" id="accountsContainer"></div>
+        <div class="accounts-grid" id="accountsContainer"></div>
       </section>
 
       <section class="view-panel" id="viewSettings">
@@ -1017,6 +1076,100 @@ UI_HTML = r"""<!DOCTYPE html>
     `;
   }
 
+  let lastSnapshotUsed = JSON.parse(localStorage.getItem("nooptoken_last_used") || "{}");
+
+  function renderBriefing(orderedProviders) {
+    const el = document.getElementById("briefingGrid");
+    if (!el || compactMode) { if (el) el.innerHTML = ""; return; }
+    const logged = orderedProviders.filter(p => p.logged_in);
+    const running = orderedProviders.filter(p => p.running).map(p => shortName(p.id));
+    let peak = null;
+    logged.forEach(p => {
+      const used = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
+      if (!peak || used > peak.used) peak = { name: p.name, used, reset: p.reset_text || "실시간" };
+    });
+    const nextReset = logged.find(p => p.reset_text) || logged[0];
+    el.innerHTML = `
+      <div class="briefing-card">
+        <span class="briefing-label">실행 중인 AI</span>
+        <span class="briefing-value">${running.length ? running.join(" · ") : "실행 중인 앱 없음"}</span>
+        <span class="briefing-sub">연동 계정 ${logged.length} / ${orderedProviders.length}개</span>
+      </div>
+      <div class="briefing-card">
+        <span class="briefing-label">가장 높은 사용량</span>
+        <span class="briefing-value" style="color:${peak && peak.used >= 80 ? 'var(--danger)' : 'var(--text)'}">${peak ? `${peak.name} (${peak.used}%)` : "연동 필요"}</span>
+        <span class="briefing-sub">${peak ? `기준: 최대 사용 구간` : "계정 연동 탭에서 로그인하세요"}</span>
+      </div>
+      <div class="briefing-card">
+        <span class="briefing-label">가장 빠른 리셋</span>
+        <span class="briefing-value">${nextReset ? nextReset.reset_text : "-"}</span>
+        <span class="briefing-sub">${nextReset ? nextReset.name : "대기 중"}</span>
+      </div>
+    `;
+  }
+
+  function renderAccountsView(orderedProviders) {
+    const accContainer = document.getElementById("accountsContainer");
+    if (!accContainer) return;
+    accContainer.innerHTML = orderedProviders.map(p => {
+      const showPaste = openPasteBoxes[p.id] ? "show" : "";
+      const placeholder = p.id === "claude"
+        ? "로그인 후 화면에 뜬 인증코드 붙여넣기"
+        : "WorkosCursorSessionToken 값 붙여넣기";
+      const needsPaste = (p.id === "claude" || p.id === "cursor");
+      if (p.logged_in) {
+        return `
+          <div class="account-card">
+            <div class="account-top">
+              <div class="account-id">
+                <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
+                <div class="account-meta">
+                  <div class="account-title">
+                    <span>${p.name}</span>
+                    ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
+                  </div>
+                  <div class="account-sub">${escapeHtml(p.account || "연동됨")} · ${escapeHtml(p.plan || p.badge || "")}</div>
+                </div>
+              </div>
+              <span class="badge" style="color:var(--ok);border-color:rgba(22,179,110,0.3);">연동됨</span>
+            </div>
+            <div class="account-actions">
+              <button class="pill-btn" onclick="openProviderInfoModal('${p.id}', event)">상세 정보</button>
+              <button class="pill-btn" onclick="openLogin('${p.id}', event)">재연동</button>
+              <button class="pill-btn" style="color:var(--danger);" onclick="logoutProvider('${p.id}', event)">연동 해제</button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="account-card">
+          <div class="account-top">
+            <div class="account-id">
+              <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
+              <div class="account-meta">
+                <div class="account-title">
+                  <span>${p.name}</span>
+                  ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
+                </div>
+                <div class="account-sub">${escapeHtml(p.hint || "계정을 연동하면 실시간 한도를 표시합니다.")}</div>
+              </div>
+            </div>
+            <span class="badge">미연동</span>
+          </div>
+          <div class="account-actions">
+            <button class="login-btn" style="width:100%;" onclick="openLogin('${p.id}', event)">${p.login_label || (p.name + " 로그인")}</button>
+          </div>
+          ${needsPaste ? `
+            <div class="paste-box ${showPaste}" id="paste_${p.id}">
+              <input class="paste-input" id="input_${p.id}" placeholder="${placeholder}" onclick="event.stopPropagation()" />
+              <button class="paste-submit" onclick="submitCodeOrToken('${p.id}', event)">연동</button>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }).join("");
+  }
+
   function render(data) {
     if (!data || !data.providers || isDragging) return;
     lastData = data;
@@ -1035,35 +1188,33 @@ UI_HTML = r"""<!DOCTYPE html>
     const orderedProviders = cardOrder.map(id => pMap[id]).filter(Boolean);
     data.providers.forEach(p => { if (!cardOrder.includes(p.id)) orderedProviders.push(p); });
 
-    // In compact (mini-widget) mode, hide apps that are NOT logged in!
-    const visibleProviders = compactMode
-      ? orderedProviders.filter(p => p.logged_in)
-      : orderedProviders;
+    renderBriefing(orderedProviders);
+    renderAccountsView(orderedProviders);
+
+    // Dashboard & Mini-widget show only logged-in providers (Accounts tab manages unlinked apps!)
+    const visibleProviders = orderedProviders.filter(p => p.logged_in);
 
     const miniBar = document.getElementById("miniBar");
-    if (visibleProviders.length === 0 && compactMode) {
+    if (visibleProviders.length === 0) {
       miniBar.innerHTML = "";
     } else {
       miniBar.innerHTML = visibleProviders.map(p => {
-        if (!p.logged_in) {
-          return `
-            <div class="mini-pill" onclick="openLogin('${p.id}', event)">
-              <div class="mini-pill-top">
-                <span>${shortName(p.id)}</span>
-                <span style="width:6px;height:6px;border-radius:50%;background:var(--border-strong);"></span>
-              </div>
-              <div class="mini-pill-val" style="color:var(--text-3);font-size:11.5px;">미연동</div>
-              <div class="mini-progress"><div class="mini-progress-fill" style="width:0%"></div></div>
-            </div>
-          `;
-        }
         const col = getColor(p.remaining_pct);
         const m = getDisplayMetric(p.remaining_pct);
+        const curUsed = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
+        const prevUsed = lastSnapshotUsed[p.id];
+        const delta = (typeof prevUsed === "number") ? Math.round((curUsed - prevUsed) * 10) / 10 : 0;
+        const deltaHtml = delta !== 0
+          ? `<span class="delta-tag ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : ''}${delta}%</span>`
+          : "";
         return `
           <div class="mini-pill" onclick="toggleCard('${p.id}')">
             <div class="mini-pill-top">
               <span>${shortName(p.id)}</span>
-              <span style="width:6px;height:6px;border-radius:50%;background:${col};"></span>
+              <span style="display:inline-flex;align-items:center;gap:4px;">
+                ${deltaHtml}
+                <span style="width:6px;height:6px;border-radius:50%;background:${col};"></span>
+              </span>
             </div>
             <div class="mini-pill-val" style="color:${col}">${m.pct}% <span style="font-size:10px;font-weight:600;color:var(--text-3);">${m.tag}</span></div>
             <div class="mini-progress"><div class="mini-progress-fill" style="width:${m.width}%;background:${col}"></div></div>
@@ -1072,22 +1223,24 @@ UI_HTML = r"""<!DOCTYPE html>
       }).join("");
     }
 
+    // Save latest used snapshot for delta display
+    const nextSnap = {};
+    orderedProviders.forEach(p => {
+      if (p.logged_in) nextSnap[p.id] = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
+    });
+    localStorage.setItem("nooptoken_last_used", JSON.stringify(nextSnap));
+
     const container = document.getElementById("cardsContainer");
-    if (compactMode && visibleProviders.length === 0) {
+    if (visibleProviders.length === 0) {
       container.innerHTML = `
         <div class="empty-compact">
-          <div style="font-weight:700;font-size:13px;">연동된 AI 계정이 없습니다</div>
-          <div style="font-size:11.5px;color:var(--text-3);">전체 창으로 확장해 계정을 먼저 연동하세요.</div>
-          <button class="pill-btn active" onclick="toggleCompact()">전체 창으로 확장</button>
+          <div style="font-weight:700;font-size:13.5px;">연동된 AI 계정이 없습니다</div>
+          <div style="font-size:12px;color:var(--text-3);">${compactMode ? '전체 창으로 확장해 계정을 먼저 연동하세요.' : '좌측 [계정 연동] 탭에서 계정을 연결하세요.'}</div>
+          <button class="pill-btn active" onclick="${compactMode ? 'toggleCompact()' : "switchTab('accounts')"}">${compactMode ? '전체 창으로 확장' : '계정 연동으로 이동'}</button>
         </div>
       `;
     } else {
       container.innerHTML = visibleProviders.map(p => renderCardHtml(p, savedInputs)).join("");
-    }
-
-    const accContainer = document.getElementById("accountsContainer");
-    if (accContainer) {
-      accContainer.innerHTML = orderedProviders.map(p => renderCardHtml(p, savedInputs)).join("");
     }
 
     Object.keys(savedInputs).forEach(id => {
