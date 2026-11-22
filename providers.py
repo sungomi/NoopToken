@@ -3,6 +3,8 @@ import os
 import platform
 import re
 import sqlite3
+import subprocess
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -963,6 +965,131 @@ def fetch_codex_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[str, Any
     }
 
 
+_RUNNING_CACHE: Dict[str, Any] = {"ts": 0.0, "data": {}}
+_PREV_BAR_USED: Dict[str, float] = {}
+_NOTIFIED_LEVEL: Dict[str, int] = {}
+
+
+def _detect_running_providers() -> Dict[str, bool]:
+    """Lightweight check of whether each AI agent app/CLI is currently running on this machine."""
+    now = time.time()
+    if _RUNNING_CACHE["data"] and (now - _RUNNING_CACHE["ts"] < 5.0):
+        return dict(_RUNNING_CACHE["data"])
+
+    res = {"antigravity": False, "claude": False, "cursor": False, "codex": False}
+    try:
+        if platform.system() == "Windows":
+            out = subprocess.check_output(
+                ["tasklist", "/FO", "CSV", "/NH"],
+                text=True,
+                timeout=2.0,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+                stderr=subprocess.DEVNULL,
+            )
+            lines = out.lower()
+        else:
+            out = subprocess.check_output(
+                ["ps", "-eo", "comm="],
+                text=True,
+                timeout=1.5,
+                stderr=subprocess.DEVNULL,
+            )
+            lines = out.lower()
+
+        if "antigravity" in lines or "language_server" in lines:
+            res["antigravity"] = True
+        if re.search(r"(^|[/\\\"\s])claude(\.exe)?(\s|\"|,|$)", lines, re.MULTILINE):
+            res["claude"] = True
+        if re.search(r"(^|[/\\\"\s])cursor(\.exe)?(\s|\"|,|$)", lines, re.MULTILINE):
+            res["cursor"] = True
+        if re.search(r"(^|[/\\\"\s])codex(\.exe)?(\s|\"|,|$)", lines, re.MULTILINE):
+            res["codex"] = True
+    except Exception:
+        pass
+
+    _RUNNING_CACHE["ts"] = now
+    _RUNNING_CACHE["data"] = dict(res)
+    return res
+
+
+def _send_os_notification(title: str, message: str) -> None:
+    """Send a non-blocking native OS desktop notification."""
+    def _worker():
+        try:
+            sys_name = platform.system()
+            if sys_name == "Darwin":
+                safe_t = title.replace('"', '\\"')
+                safe_m = message.replace('"', '\\"')
+                subprocess.run(
+                    ["osascript", "-e", f'display notification "{safe_m}" with title "{safe_t}"'],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=3.0,
+                )
+            elif sys_name == "Windows":
+                safe_t = title.replace("'", "''")
+                safe_m = message.replace("'", "''")
+                ps = (
+                    "Add-Type -AssemblyName System.Windows.Forms; "
+                    "$n = New-Object System.Windows.Forms.NotifyIcon; "
+                    "$n.Icon = [System.Drawing.SystemIcons]::Information; "
+                    "$n.Visible = $true; "
+                    f"$n.ShowBalloonTip(4000, '{safe_t}', '{safe_m}', [System.Windows.Forms.ToolTipIcon]::Info); "
+                    "Start-Sleep -Milliseconds 4500; $n.Dispose()"
+                )
+                subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=7.0,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+                )
+        except Exception:
+            pass
+
+    threading.Thread(target=_worker, daemon=True).start()
+
+
+def _check_and_notify_thresholds(providers_list: List[Dict[str, Any]], cfg: Dict[str, Any]) -> None:
+    if not cfg.get("notifications_enabled", True):
+        return
+
+    for p in providers_list:
+        if not p.get("logged_in"):
+            continue
+        pid = p.get("id", "")
+        pname = p.get("name", pid)
+        for box in p.get("boxes") or []:
+            bid = box.get("id", "")
+            for bar in box.get("bars") or []:
+                bname = bar.get("name", "")
+                rem = float(bar.get("remaining_pct", 100.0))
+                used = round(max(0.0, min(100.0, 100.0 - rem)), 1)
+                key = f"{pid}:{bid}:{bname}"
+                prev_used = _PREV_BAR_USED.get(key)
+                _PREV_BAR_USED[key] = used
+
+                if prev_used is None:
+                    # Seed initial level on startup without spamming notifications
+                    _NOTIFIED_LEVEL[key] = 90 if used >= 90.0 else (80 if used >= 80.0 else 0)
+                    continue
+
+                if prev_used >= 50.0 and used <= 5.0:
+                    _NOTIFIED_LEVEL[key] = 0
+                    _send_os_notification("TokenChecker", f"{pname} · {bname} 한도가 리셋되었습니다.")
+                    continue
+
+                lvl = _NOTIFIED_LEVEL.get(key, 0)
+                if used >= 90.0 and lvl < 90:
+                    _NOTIFIED_LEVEL[key] = 90
+                    _send_os_notification("TokenChecker 경고", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
+                elif used >= 80.0 and lvl < 80:
+                    _NOTIFIED_LEVEL[key] = 80
+                    _send_os_notification("TokenChecker 알림", f"{pname} · {bname} {used:.0f}% 사용 (잔여 {rem:.0f}%)")
+                elif used < 75.0 and lvl > 0:
+                    _NOTIFIED_LEVEL[key] = 0
+
+
 def fetch_all_quotas(force: bool = False, force_provider: str = "") -> Dict[str, Any]:
     cfg = load_config()
     fp = (force_provider or "").strip().lower()
@@ -972,6 +1099,7 @@ def fetch_all_quotas(force: bool = False, force_provider: str = "") -> Dict[str,
         "cursor": fetch_cursor_usage(cfg, force=(force and (not fp or fp == "cursor"))),
         "codex": fetch_codex_usage(cfg, force=(force and (not fp or fp == "codex"))),
     }
+    running_map = _detect_running_providers()
 
     # Apply saved card order
     saved_card_order = cfg.get("card_order") or ["antigravity", "claude", "cursor", "codex"]
@@ -995,12 +1123,16 @@ def fetch_all_quotas(force: bool = False, force_provider: str = "") -> Dict[str,
                     b for b in p_obj["boxes"] if b["id"] not in b_order
                 ]
                 p_obj["boxes"] = ordered_boxes
+        p_obj["running"] = bool(running_map.get(pid, False))
         providers.append(p_obj)
+
+    _check_and_notify_thresholds(providers, cfg)
 
     return {
         "updated_at": datetime.now().strftime("%H:%M:%S"),
         "platform": f"{platform.system()} ({platform.machine()})",
         "card_order": ordered_ids,
         "box_order": saved_box_orders,
+        "notifications_enabled": bool(cfg.get("notifications_enabled", True)),
         "providers": providers,
     }

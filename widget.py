@@ -650,6 +650,35 @@ UI_HTML = r"""<!DOCTYPE html>
     font-size: 9.5px;
     font-weight: 700;
   }
+  .running-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 7px rgba(16, 185, 129, 0.9);
+    display: inline-block;
+    margin-left: 5px;
+    flex-shrink: 0;
+  }
+  .notify-pill {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+    padding: 1.5px 7px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  .notify-pill.active {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.28);
+  }
+  .notify-pill:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
 
   /* Floating Info Modal */
   .info-modal-backdrop {
@@ -964,7 +993,7 @@ UI_HTML = r"""<!DOCTYPE html>
   <div class="footer">
     <span style="display:inline-flex;align-items:center;gap:6px;">
       <span class="version-pill" id="appVersionBadge" onclick="checkForUpdates(true)" title="클릭하여 업데이트 확인">v__APP_VERSION__</span>
-      <span>드래그하여 순서 변경</span>
+      <span class="notify-pill active" id="btnNotify" onclick="toggleNotifications()" title="한도 80%·90% 도달 및 리셋 데스크톱 알림 켜기/끄기">🔔 알림</span>
     </span>
     <span id="updatedAt">동기화 중...</span>
   </div>
@@ -1210,9 +1239,34 @@ UI_HTML = r"""<!DOCTYPE html>
     });
   }
 
+  let notifyEnabled = true;
+
+  function updateNotifyUI(enabled) {
+    notifyEnabled = !!enabled;
+    const btn = document.getElementById("btnNotify");
+    if (!btn) return;
+    btn.classList.toggle("active", notifyEnabled);
+    btn.textContent = notifyEnabled ? "🔔 알림" : "🔕 꺼짐";
+  }
+
+  async function toggleNotifications() {
+    const next = !notifyEnabled;
+    updateNotifyUI(next);
+    try {
+      await fetch("/api/notify", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({enabled: next})
+      });
+    } catch (e) {}
+  }
+
   function render(data) {
     if (!data || !data.providers || isDragging) return;
     lastData = data;
+    if (typeof data.notifications_enabled === "boolean") {
+      updateNotifyUI(data.notifications_enabled);
+    }
     document.getElementById("updatedAt").textContent = "갱신 " + data.updated_at;
 
     const savedInputs = {};
@@ -1361,6 +1415,7 @@ UI_HTML = r"""<!DOCTYPE html>
               <div class="provider-titles">
                 <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
                   <span class="provider-name">${p.name}</span>
+                  ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
                 </button>
                 <span class="badge">${p.plan || p.badge || "연동됨"}</span>
                 <button class="provider-refresh-btn" data-refresh-provider="${p.id}" title="수동 새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
@@ -1602,6 +1657,10 @@ UI_HTML = r"""<!DOCTYPE html>
       <div class="info-modal-row">
         <span class="info-modal-label">플랜</span>
         <span class="info-modal-val">${escapeHtml(plan)}</span>
+      </div>
+      <div class="info-modal-row">
+        <span class="info-modal-label">실행 상태</span>
+        <span class="info-modal-val" style="color:${p.running ? '#10b981' : '#94a3b8'}">${p.running ? '● 실행 중' : '미실행'}</span>
       </div>
       <div class="info-modal-row">
         <span class="info-modal-label">갱신 / 리셋</span>
@@ -2324,6 +2383,17 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
             self.wfile.write(data)
+            return
+
+        if self.path == "/api/notify":
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length).decode("utf-8")
+            payload = json.loads(raw) if raw else {}
+            enabled = bool(payload.get("enabled", True))
+            save_config({"notifications_enabled": enabled})
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(json.dumps({"ok": True, "enabled": enabled}).encode("utf-8"))
             return
 
         if self.path == "/api/save_order":
