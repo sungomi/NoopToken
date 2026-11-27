@@ -100,7 +100,7 @@ UI_HTML = r"""<!DOCTYPE html>
     --shadow-hover: 0 2px 6px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.075);
     --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
     --radius: 18px;
-    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", "Malgun Gothic", sans-serif;
     color-scheme: light;
   }
 
@@ -863,6 +863,11 @@ UI_HTML = r"""<!DOCTYPE html>
     const moonSvg = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
     if (btn) btn.innerHTML = t === "dark" ? sunSvg : moonSvg;
     if (sBtn) sBtn.textContent = t === "dark" ? "다크 모드" : "라이트 모드";
+    fetch("/api/theme", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({theme: t})
+    }).catch(() => {});
   }
 
   function toggleTheme() {
@@ -1993,7 +1998,7 @@ class WidgetApi:
                 if compact:
                     self.window.resize(420, 560)
                 else:
-                    self.window.resize(840, 640)
+                    self.window.resize(920, 660)
             except Exception:
                 pass
         return True
@@ -2225,6 +2230,26 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"ok":true}')
             return
 
+        if self.path == "/api/theme":
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length).decode("utf-8")
+            payload = json.loads(raw) if raw else {}
+            theme = "light" if payload.get("theme") == "light" else "dark"
+            save_config({"theme": theme})
+            if platform.system() == "Windows":
+                try:
+                    import ctypes
+                    hwnd = ctypes.windll.user32.FindWindowW(None, APP_NAME)
+                    if hwnd:
+                        _apply_windows_window_style(hwnd, dark=(theme == "dark"))
+                except Exception:
+                    pass
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"ok": True, "theme": theme}).encode("utf-8"))
+            return
+
         if self.path == "/api/window":
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length).decode("utf-8")
@@ -2239,10 +2264,17 @@ class LocalHTTPHandler(BaseHTTPRequestHandler):
                         user32 = ctypes.windll.user32
                         hwnd = user32.FindWindowW(None, APP_NAME)
                         if hwnd:
+                            scale = 1.0
+                            try:
+                                dpi = user32.GetDpiForWindow(hwnd)
+                                if dpi and dpi > 0:
+                                    scale = dpi / 96.0
+                            except Exception:
+                                pass
                             rect = wintypes.RECT()
                             user32.GetWindowRect(hwnd, ctypes.byref(rect))
-                            target_w = 420 if compact else 840
-                            target_h = 560 if compact else 640
+                            target_w = int((420 if compact else 920) * scale)
+                            target_h = int((560 if compact else 660) * scale)
                             user32.SetWindowPos(hwnd, 0, 0, 0, target_w, target_h, 0x0002 | 0x0004 | 0x0010)
                     except Exception:
                         pass
@@ -2303,6 +2335,39 @@ def run_cli_summary():
                     bar_used = round(max(0.0, min(100.0, 100.0 - bar_rem)), 1)
                     print(f"   │   • {bar['name']:18s}: {bar_used:5.1f}% 사용 / {bar_rem:5.1f}% 남음 ({bar.get('reset_text', '')})")
     print()
+
+
+def _apply_windows_window_style(hwnd: int, dark: bool = True) -> None:
+    """Apply native Windows 10/11 dark/light title bar, caption tint, and rounded corners."""
+    if platform.system() != "Windows" or not hwnd:
+        return
+    try:
+        import ctypes
+        dwmapi = ctypes.windll.dwmapi
+        dark_val = ctypes.c_int(1 if dark else 0)
+        # DWMWA_USE_IMMERSIVE_DARK_MODE (20 on Win10 2004+/Win11, 19 on older Win10)
+        res = dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(dark_val), ctypes.sizeof(dark_val))
+        if res != 0:
+            dwmapi.DwmSetWindowAttribute(hwnd, 19, ctypes.byref(dark_val), ctypes.sizeof(dark_val))
+        # DWMWA_WINDOW_CORNER_PREFERENCE (33): DWMWCP_ROUND (2) on Windows 11
+        corner_pref = ctypes.c_int(2)
+        dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(corner_pref), ctypes.sizeof(corner_pref))
+        # DWMWA_CAPTION_COLOR (35): COLORREF 0x00BBGGRR matching UI --bg (#0b0d15 / #f5f6fa)
+        caption_bgr = ctypes.c_int(0x00150D0B if dark else 0x00FAF6F5)
+        dwmapi.DwmSetWindowAttribute(hwnd, 35, ctypes.byref(caption_bgr), ctypes.sizeof(caption_bgr))
+        # DWMWA_TEXT_COLOR (36): COLORREF 0x00BBGGRR matching UI --text (#f1f5f9 / #0f172a)
+        text_bgr = ctypes.c_int(0x00F9F5F1 if dark else 0x002A170F)
+        dwmapi.DwmSetWindowAttribute(hwnd, 36, ctypes.byref(text_bgr), ctypes.sizeof(text_bgr))
+    except Exception:
+        pass
+
+
+def _resolve_asset_path(filename: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    p = base / "assets" / filename
+    if p.exists():
+        return p
+    return Path(__file__).resolve().parent / "assets" / filename
 
 
 def _patch_pywebview_winforms_deadlock() -> None:
@@ -2367,10 +2432,27 @@ def _patch_pywebview_winforms_deadlock() -> None:
                 try:
                     logging.info("[GUI] STA thread create() entered")
                     browser = wf.BrowserView.BrowserForm(window, wf.cache_dir)
+                    try:
+                        ico_path = _resolve_asset_path("icon.ico")
+                        if ico_path.exists():
+                            from System.Drawing import Icon as DotNetIcon
+                            browser.Icon = DotNetIcon(str(ico_path))
+                    except Exception as icon_ex:
+                        logging.warning(f"[GUI] Could not set WinForms window icon: {icon_ex}")
                     wf.BrowserView.instances[window.uid] = browser
                     window.events.before_show.set()
+                    try:
+                        is_dark = load_config().get("theme", "dark") != "light"
+                        _apply_windows_window_style(int(browser.Handle.ToInt64()), dark=is_dark)
+                    except Exception:
+                        pass
                     browser.Show()
                     browser.Activate()
+                    try:
+                        is_dark = load_config().get("theme", "dark") != "light"
+                        _apply_windows_window_style(int(browser.Handle.ToInt64()), dark=is_dark)
+                    except Exception:
+                        pass
                     wf._main_window_created.set()
                     logging.info("[GUI] BrowserForm shown, entering WinForms Application.Run()")
                     if window.uid == "master":
@@ -2384,8 +2466,15 @@ def _patch_pywebview_winforms_deadlock() -> None:
             if window.uid == "master":
                 if wf.is_chromium:
                     wf.init_storage()
-                if sys.getwindowsversion().major >= 6:
-                    ctypes.windll.user32.SetProcessDPIAware()
+                try:
+                    # DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (-4) for sharp rendering on 125%/150% displays
+                    ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+                except Exception:
+                    try:
+                        if sys.getwindowsversion().major >= 6:
+                            ctypes.windll.user32.SetProcessDPIAware()
+                    except Exception:
+                        pass
                 thread = wf.Thread(wf.ThreadStart(create))
                 thread.SetApartmentState(wf.ApartmentState.STA)
                 thread.Start()
@@ -2527,6 +2616,7 @@ def main():
             _patch_pywebview_winforms_deadlock()
 
         cfg = load_config()
+        init_bg = "#f5f6fa" if cfg.get("theme") == "light" else "#0b0d15"
         window = webview.create_window(
             title=APP_NAME,
             url=url,
@@ -2536,7 +2626,7 @@ def main():
             y=80,
             resizable=True,
             on_top=bool(cfg.get("always_on_top", False)),
-            background_color="#10121f",
+            background_color=init_bg,
         )
         GLOBAL_API.window = window
 

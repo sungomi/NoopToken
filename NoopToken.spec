@@ -8,7 +8,7 @@ a = Analysis(
     ["widget.py"],
     pathex=[],
     binaries=[],
-    datas=[("assets/icon.png", "assets")],
+    datas=[("assets/icon.png", "assets"), ("assets/icon.ico", "assets")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
