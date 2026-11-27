@@ -75,45 +75,61 @@ UI_HTML = r"""<!DOCTYPE html>
 <title>NoopToken</title>
 <style>
   :root {
-    --bg: #f4f5fa;
+    --bg: #f5f6fa;
+    --bg-subtle: #eceef6;
     --surface: #ffffff;
-    --surface-2: #f7f8fc;
-    --sidebar: rgba(255, 255, 255, 0.85);
-    --border: #e6e8f0;
-    --border-strong: #d7dae6;
-    --text: #171a2b;
-    --text-2: #5b6078;
-    --text-3: #9095ab;
+    --surface-2: #f8f9fd;
+    --sidebar: rgba(255, 255, 255, 0.78);
+    --border: rgba(15, 23, 42, 0.075);
+    --border-strong: rgba(15, 23, 42, 0.14);
+    --text: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
     --accent: #5b67f5;
-    --accent-2: #8a94ff;
-    --accent-soft: rgba(110, 123, 255, 0.12);
-    --ok: #16b36e;
+    --accent-soft: rgba(91, 103, 245, 0.10);
+    --accent-ring: rgba(91, 103, 245, 0.22);
+    --peach: #f29b60;
+    --ok: #10b981;
+    --ok-soft: rgba(16, 185, 129, 0.12);
     --warn: #f59e0b;
-    --danger: #ef4462;
-    --shadow-sm: 0 1px 2px rgba(23, 26, 43, 0.06), 0 1px 1px rgba(23, 26, 43, 0.03);
-    --shadow: 0 8px 24px rgba(23, 26, 43, 0.08), 0 2px 6px rgba(23, 26, 43, 0.04);
-    --radius: 16px;
-    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    --warn-soft: rgba(245, 158, 11, 0.13);
+    --danger: #ef4444;
+    --danger-soft: rgba(239, 68, 68, 0.12);
+    --track: #e8ebf4;
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.045);
+    --shadow-hover: 0 2px 6px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.075);
+    --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --radius: 18px;
+    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
     color-scheme: light;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #10121f;
-      --surface: #181b2c;
-      --surface-2: #1f2336;
-      --sidebar: rgba(21, 24, 40, 0.88);
-      --border: #2a2f47;
-      --border-strong: #363c58;
-      --text: #eef0fb;
-      --text-2: #a7acc8;
-      --text-3: #6f7596;
-      --accent: #7b86ff;
-      --accent-soft: rgba(110, 123, 255, 0.18);
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-      --shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
-      color-scheme: dark;
-    }
+  :root[data-theme="dark"] {
+    --bg: #0b0d15;
+    --bg-subtle: #111422;
+    --surface: #141826;
+    --surface-2: #1a1f31;
+    --sidebar: rgba(17, 20, 34, 0.86);
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text: #f1f5f9;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --accent: #818cf8;
+    --accent-soft: rgba(129, 140, 248, 0.16);
+    --accent-ring: rgba(129, 140, 248, 0.30);
+    --peach: #f29b60;
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.14);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.14);
+    --danger: #f87171;
+    --danger-soft: rgba(248, 113, 113, 0.15);
+    --track: rgba(255, 255, 255, 0.08);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px rgba(0, 0, 0, 0.28);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 34px rgba(0, 0, 0, 0.36);
+    --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+    color-scheme: dark;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -125,109 +141,142 @@ UI_HTML = r"""<!DOCTYPE html>
     background: var(--bg);
     -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.012em;
     overflow: hidden;
   }
   input { user-select: text; -webkit-user-select: text; }
   button { font: inherit; color: inherit; }
 
-  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
 
   .app { display: flex; height: 100vh; width: 100vw; }
 
-  /* ---------------- Sidebar (Full App Mode) ---------------- */
+  /* ---------------- Sidebar ---------------- */
   .sidebar {
-    width: 218px;
+    width: 220px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    padding: 18px 14px 14px;
+    padding: 20px 14px 14px;
     background: var(--sidebar);
     border-right: 1px solid var(--border);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
   body.compact .sidebar { display: none; }
 
   .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 4px 8px 18px;
+    gap: 11px;
+    padding: 2px 8px 22px;
   }
   .brand-logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     object-fit: cover;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
     flex-shrink: 0;
   }
   .brand-title-wrap { display: flex; flex-direction: column; gap: 1px; }
-  .brand-name { font-size: 15.5px; font-weight: 750; letter-spacing: -0.02em; }
+  .brand-name { font-size: 15.5px; font-weight: 800; letter-spacing: -0.025em; }
   .brand-sub { font-size: 10.5px; color: var(--text-3); font-weight: 500; }
 
-  .nav { display: flex; flex-direction: column; gap: 3px; }
+  .nav { display: flex; flex-direction: column; gap: 4px; }
   .nav-item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 12px;
+    padding: 9.5px 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 11px;
     background: transparent;
     color: var(--text-2);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     text-align: left;
-    transition: background 0.14s ease, color 0.14s ease;
+    transition: background 0.15s ease, color 0.15s ease;
   }
   .nav-item:hover { background: var(--surface-2); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .nav-count {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--bg-subtle);
+    color: var(--text-2);
+  }
+  .nav-item.active .nav-count { background: var(--accent); color: #ffffff; }
 
   .sidebar-spacer { flex: 1; }
-  .sidebar-card {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px;
+
+  .sidebar-footer {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
   }
+  .sidebar-btn-row { display: flex; gap: 6px; }
   .collapse-btn {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 9px;
-    border: 1px solid var(--border-strong);
+    flex: 1;
+    padding: 8.5px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 650;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    box-shadow: var(--shadow-sm);
-    transition: border-color 0.14s ease, transform 0.12s ease;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
   }
-  .collapse-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .collapse-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .theme-btn {
+    width: 34px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
   .sidebar-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 10.5px;
     color: var(--text-3);
-    padding: 0 2px;
+    padding: 2px 4px 0;
   }
   .version-link { cursor: pointer; font-weight: 600; }
   .version-link:hover { color: var(--accent); }
 
-  /* ---------------- Compact Header (Widget Mode) ---------------- */
+  /* ---------------- Compact Header (Mini Widget) ---------------- */
   .compact-header {
     display: none;
     align-items: center;
@@ -239,11 +288,11 @@ UI_HTML = r"""<!DOCTYPE html>
     flex-shrink: 0;
   }
   body.compact .compact-header { display: flex; }
-  .compact-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; }
+  .compact-brand { display: flex; align-items: center; gap: 8px; font-weight: 750; font-size: 13.5px; letter-spacing: -0.02em; }
   .compact-logo { width: 22px; height: 22px; border-radius: 6px; }
   .compact-actions { display: flex; align-items: center; gap: 5px; }
 
-  /* ---------------- Main Content ---------------- */
+  /* ---------------- Main Area ---------------- */
   .main {
     flex: 1;
     display: flex;
@@ -256,19 +305,50 @@ UI_HTML = r"""<!DOCTYPE html>
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 18px 24px 12px;
+    padding: 20px 26px 12px;
     flex-shrink: 0;
   }
   body.compact .topbar { display: none; }
-  .page-title { font-size: 18px; font-weight: 750; letter-spacing: -0.02em; }
-  .page-actions { display: flex; align-items: center; gap: 6px; }
+  .page-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .page-title { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; }
+  .page-sub { font-size: 11.5px; color: var(--text-3); font-weight: 500; }
+
+  .page-actions { display: flex; align-items: center; gap: 7px; }
+
+  /* Segmented Control */
+  .seg-ctrl {
+    display: inline-flex;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2.5px;
+    gap: 2px;
+  }
+  .seg-btn {
+    border: 0;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 7.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .seg-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    font-weight: 700;
+  }
 
   .pill-btn {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text-2);
-    border-radius: 9px;
-    height: 30px;
+    border-radius: 10px;
+    height: 31px;
     padding: 0 11px;
     font-size: 12px;
     font-weight: 600;
@@ -277,24 +357,23 @@ UI_HTML = r"""<!DOCTYPE html>
     align-items: center;
     justify-content: center;
     gap: 5px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     transition: all 0.14s ease;
     white-space: nowrap;
   }
   .pill-btn:hover { border-color: var(--border-strong); color: var(--text); }
   .pill-btn.active { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
-  .pill-btn:disabled { opacity: 0.65; cursor: default; color: var(--accent); min-width: 32px; }
+  .pill-btn:disabled { opacity: 0.7; cursor: default; color: var(--accent); min-width: 34px; }
   .pill-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; pointer-events: none; }
-
-  body.compact .pill-btn { height: 26px; padding: 0 8px; font-size: 11px; border-radius: 7px; }
+  body.compact .pill-btn { height: 26px; padding: 0 8.5px; font-size: 11px; border-radius: 7px; }
 
   .scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 24px 24px;
+    padding: 4px 26px 26px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
   }
   body.compact .scroll-area { padding: 10px 12px 14px; gap: 10px; }
 
@@ -306,315 +385,308 @@ UI_HTML = r"""<!DOCTYPE html>
     padding: 10px 14px;
     border-radius: 12px;
     background: var(--accent-soft);
-    border: 1px solid var(--accent);
+    border: 1px solid var(--accent-ring);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 650;
   }
   .update-banner.show { display: flex; }
   .update-apply-btn {
-    background: var(--accent);
-    color: #ffffff;
-    border: none;
-    border-radius: 7px;
-    padding: 5px 11px;
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
+    background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+    padding: 5px 12px; font-size: 11.5px; font-weight: 700; cursor: pointer;
   }
   .update-close-btn { background: transparent; border: none; color: var(--text-2); cursor: pointer; padding: 2px 5px; }
 
-  /* Summary Grid */
-  .mini-bar {
+  /* ---------------- Status Ribbon (Replaces cluttered 3-box + 4-box duplication) ---------------- */
+  .status-ribbon {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  body.compact .mini-bar {
-    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-    gap: 7px;
-  }
-  .mini-pill {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 11px 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    transition: border-color 0.14s ease, transform 0.12s ease;
+    box-shadow: var(--shadow-card), var(--inset-top);
   }
-  body.compact .mini-pill { padding: 8px 10px; border-radius: 10px; gap: 4px; }
-  .mini-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .mini-pill-top {
+  body.compact .status-ribbon { display: none; }
+  .ribbon-stat {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-size: 11.5px;
-    color: var(--text-2);
-    font-weight: 600;
+    gap: 8px;
+    min-width: 0;
+    padding-right: 12px;
+    border-right: 1px solid var(--border);
   }
-  .mini-pill-val { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
-  body.compact .mini-pill-val { font-size: 13px; }
-  .mini-progress { height: 4px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
-  .mini-progress-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
+  .ribbon-stat:last-child { padding-right: 0; border-right: 0; }
+  .ribbon-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); flex-shrink: 0; }
+  .ribbon-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .ribbon-label { font-size: 10.5px; color: var(--text-3); font-weight: 600; white-space: nowrap; }
+  .ribbon-val { font-size: 12.5px; font-weight: 750; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Cards */
+  /* ---------------- Provider Cards Grid ---------------- */
   .cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 16px;
     align-items: start;
   }
-  body.compact .cards {
-    grid-template-columns: 1fr;
-    gap: 9px;
-  }
-  @media (max-width: 720px) {
-    .cards { grid-template-columns: 1fr; }
-  }
+  body.compact .cards { grid-template-columns: 1fr; gap: 10px; }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
 
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-card), var(--inset-top);
     overflow: hidden;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
   }
-  body.compact .card { border-radius: 12px; }
-  .card:hover { border-color: var(--border-strong); }
-  .card.dragging { opacity: 0.92; border-color: var(--accent); box-shadow: var(--shadow); }
+  body.compact .card { border-radius: 14px; }
+  .card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-hover), var(--inset-top); }
+  .card.dragging { opacity: 0.92; border-color: var(--accent); }
 
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 12px 14px;
+    gap: 10px;
+    padding: 14px 16px;
     cursor: grab;
   }
-  body.compact .card-header { padding: 10px 12px; }
+  body.compact .card-header { padding: 11px 13px; }
   .card-header:active { cursor: grabbing; }
-  .provider-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
-  .drag-grip { width: 10px; height: 14px; opacity: 0.28; display: inline-flex; align-items: center; flex-shrink: 0; }
-  .card-header:hover .drag-grip, .box-header:hover .drag-grip { opacity: 0.7; }
-  .drag-grip svg { width: 10px; height: 14px; fill: currentColor; }
+
+  .provider-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+  .drag-grip { width: 8px; height: 14px; opacity: 0; transition: opacity 0.15s ease; display: inline-flex; align-items: center; flex-shrink: 0; color: var(--text-3); }
+  .card:hover .drag-grip, .group-box:hover .drag-grip { opacity: 0.65; }
+  .drag-grip svg { width: 8px; height: 14px; fill: currentColor; }
 
   .brand-icon {
-    width: 26px; height: 26px; border-radius: 8px;
+    width: 32px; height: 32px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .brand-icon svg { width: 14px; height: 14px; }
-  .brand-antigravity { background: rgba(91, 103, 245, 0.14); color: #5b67f5; }
-  .brand-claude { background: rgba(245, 158, 11, 0.14); color: #d97706; }
-  .brand-cursor { background: rgba(14, 165, 233, 0.14); color: #0284c7; }
-  .brand-codex { background: rgba(22, 179, 110, 0.14); color: #16b36e; }
+  body.compact .brand-icon { width: 26px; height: 26px; border-radius: 8px; }
+  .brand-icon svg { width: 16px; height: 16px; }
+  .brand-antigravity { background: rgba(91, 103, 245, 0.12); color: #5b67f5; }
+  .brand-claude { background: rgba(242, 155, 96, 0.18); color: #d97706; }
+  .brand-cursor { background: rgba(14, 165, 233, 0.13); color: #0284c7; }
+  .brand-codex { background: rgba(16, 185, 129, 0.13); color: #10b981; }
 
-  .provider-titles { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+  .provider-title-stack { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .provider-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .provider-info-btn {
-    background: transparent; border: none; padding: 2px 5px; margin: -2px -5px;
-    border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    background: transparent; border: none; padding: 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; min-width: 0;
   }
-  .provider-info-btn:hover { background: var(--accent-soft); color: var(--accent); }
-  .provider-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; }
-  .running-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; flex-shrink: 0;
-  }
-  .badge {
-    font-size: 10.5px; font-weight: 600; color: var(--text-2);
-    background: var(--surface-2); border: 1px solid var(--border);
-    padding: 2px 8px; border-radius: 99px; white-space: nowrap;
-  }
-  .provider-refresh-btn, .logout-btn {
-    width: 20px; height: 20px; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--surface-2);
-    color: var(--text-2); font-size: 10.5px; cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center;
-    opacity: 0.7; transition: all 0.14s ease;
-  }
-  .provider-refresh-btn:hover, .logout-btn:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
-  .provider-refresh-btn:disabled { opacity: 1; color: var(--accent); font-weight: 700; font-size: 10px; cursor: default; }
+  .provider-info-btn:hover .provider-name { color: var(--accent); }
+  .provider-name { font-weight: 750; font-size: 14.5px; letter-spacing: -0.02em; white-space: nowrap; }
+  .running-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2.5px var(--ok-soft); flex-shrink: 0; }
+  .plan-sub { font-size: 11px; color: var(--text-3); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .card-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .pct-pill { display: inline-flex; align-items: baseline; gap: 3px; }
-  .rem-pct { font-size: 15px; font-weight: 800; }
-  .rem-label { font-size: 10px; color: var(--text-3); font-weight: 600; }
-  .chevron-badge {
-    width: 22px; height: 22px; border-radius: 7px; background: var(--surface-2); color: var(--text-2);
-    display: flex; align-items: center; justify-content: center; font-size: 10px; transition: transform 0.2s ease;
+  .card-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .card-actions {
+    display: flex; align-items: center; gap: 4px;
+    opacity: 0.45; transition: opacity 0.15s ease;
   }
+  .card:hover .card-actions { opacity: 1; }
+  .icon-action-btn {
+    width: 24px; height: 24px; border-radius: 7px;
+    border: 1px solid transparent; background: transparent;
+    color: var(--text-2); font-size: 11.5px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.14s ease;
+  }
+  .icon-action-btn:hover { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+  .icon-action-btn:disabled { opacity: 1; color: var(--accent); font-weight: 700; font-size: 10.5px; cursor: default; }
+
+  .card-summary-badge {
+    font-size: 13px; font-weight: 800; padding: 3px 9px; border-radius: 99px;
+    white-space: nowrap; letter-spacing: -0.02em;
+  }
+  .chevron-badge {
+    width: 22px; height: 22px; border-radius: 7px; color: var(--text-3);
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+    transition: transform 0.2s ease, background 0.15s ease;
+  }
+  .card-header:hover .chevron-badge { background: var(--surface-2); color: var(--text); }
   .chevron-badge.folded { transform: rotate(-90deg); }
 
-  .card-body { padding: 0 12px 12px; border-top: 1px solid var(--border); }
+  .card-body { padding: 0 14px 14px; }
+  body.compact .card-body { padding: 0 11px 11px; }
   .card-body.folded { display: none; }
-  .boxes-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .boxes-list { display: flex; flex-direction: column; gap: 10px; }
 
+  /* ---------------- Model Group Tile (Radial Ring + Precision Bars) ---------------- */
   .group-box {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 11px;
-    overflow: hidden;
+    border-radius: 13px;
+    padding: 12px 13px;
+    transition: border-color 0.15s ease;
   }
-  .group-box.dragging { border-color: var(--accent); box-shadow: var(--shadow); }
+  body.compact .group-box { padding: 10px 11px; border-radius: 11px; }
+  .group-box:hover { border-color: var(--border-strong); }
+  .group-box.dragging { border-color: var(--accent); }
+
+  .group-tile {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  body.compact .ring-wrap { width: 44px; height: 44px; }
+  .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .ring-num { font-size: 12px; font-weight: 800; letter-spacing: -0.03em; }
+  .ring-unit { font-size: 8.5px; color: var(--text-3); font-weight: 600; margin-top: 1px; }
+
+  .group-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
   .box-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 10px; cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: grab;
   }
-  .box-title-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .box-title-wrap { display: flex; align-items: center; gap: 5px; min-width: 0; }
   .box-title-btn {
-    background: transparent; border: none; padding: 2px 5px; margin: -2px -5px;
-    border-radius: 6px; font-weight: 700; font-size: 12px; color: var(--text);
+    background: transparent; border: none; padding: 1px 4px; margin: -1px -4px;
+    border-radius: 6px; font-weight: 700; font-size: 12.5px; color: var(--text);
     cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .box-title-btn:hover { background: var(--accent-soft); color: var(--accent); }
+  .box-title-btn:hover { color: var(--accent); background: var(--accent-soft); }
   .info-dot { font-size: 10.5px; color: var(--text-3); flex-shrink: 0; }
-  .box-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .box-pct-badge { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
-  .box-chevron { font-size: 10px; color: var(--text-3); transition: transform 0.2s ease; }
+  .box-chevron { font-size: 9.5px; color: var(--text-3); transition: transform 0.2s ease; cursor: pointer; }
   .box-chevron.folded { transform: rotate(-90deg); }
-  .box-body { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+
+  .box-body { display: flex; flex-direction: column; gap: 7px; }
   .box-body.folded { display: none; }
 
   .bar-row { display: flex; flex-direction: column; gap: 4px; }
-  .bar-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 11.5px; }
-  .bar-name { font-weight: 600; color: var(--text-2); white-space: nowrap; }
-  .bar-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .bar-reset { font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
-  .bar-val { font-weight: 700; white-space: nowrap; }
-  .bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
+  .bar-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; }
+  .bar-left { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .bar-tag {
+    font-size: 9.5px; font-weight: 700; padding: 1px 5.5px; border-radius: 5px;
+    background: var(--bg-subtle); color: var(--text-2); white-space: nowrap;
+  }
+  .bar-reset { font-size: 10.5px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-val { font-weight: 750; font-size: 11.5px; white-space: nowrap; flex-shrink: 0; }
+  .bar-track { height: 5px; background: var(--track); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 
-  /* Login & Settings Views */
-  .login-box { padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-  .login-btn {
-    background: var(--accent); color: #ffffff; border: none; border-radius: 9px;
-    padding: 9px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
-  }
-  .login-btn:hover { opacity: 0.92; }
-  .login-hint { font-size: 11px; color: var(--text-3); line-height: 1.45; }
-  .paste-box { display: none; gap: 6px; }
-  .paste-box.show { display: flex; }
-  .paste-input {
-    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 7px 10px; font-size: 11.5px; outline: none;
-  }
-  .paste-input:focus { border-color: var(--accent); }
-  .paste-submit {
-    background: var(--accent); color: #fff; border: none; border-radius: 8px;
-    padding: 7px 12px; font-weight: 600; font-size: 11.5px; cursor: pointer;
-  }
-
-  .settings-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-sm);
-  }
-  .setting-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding-bottom: 12px; border-bottom: 1px solid var(--border);
-  }
-  .setting-row:last-child { padding-bottom: 0; border-bottom: 0; }
-  .setting-title { font-weight: 650; font-size: 13px; }
-  .setting-desc { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
-
-  .empty-compact {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 22px 16px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;
-  }
-
-  /* Dashboard Briefing Strip & Accounts List */
-  .briefing-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .briefing-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px 14px;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .briefing-label { font-size: 11px; color: var(--text-3); font-weight: 600; }
-  .briefing-value { font-size: 14px; font-weight: 750; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .briefing-sub { font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .delta-tag {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 99px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text-2);
-    white-space: nowrap;
-  }
-  .delta-tag.up { color: var(--warn); }
-  .delta-tag.down { color: var(--ok); }
-
+  /* ---------------- Accounts & Settings Views ---------------- */
   .accounts-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
-  @media (max-width: 720px) {
-    .briefing-grid, .accounts-grid { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 720px) { .accounts-grid { grid-template-columns: 1fr; } }
   .account-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow-sm);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-card), var(--inset-top);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
   .account-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .account-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .account-id { display: flex; align-items: center; gap: 11px; min-width: 0; }
   .account-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .account-title { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .account-title { font-weight: 750; font-size: 14px; display: flex; align-items: center; gap: 6px; }
   .account-sub { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .account-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .status-pill {
+    font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 99px;
+    background: var(--bg-subtle); color: var(--text-3); white-space: nowrap;
+  }
+  .status-pill.linked { background: var(--ok-soft); color: var(--ok); }
+  .account-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 
-  /* Modal */
+  .login-btn {
+    background: var(--accent); color: #ffffff; border: none; border-radius: 10px;
+    padding: 9px 14px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%;
+    transition: opacity 0.15s ease;
+  }
+  .login-btn:hover { opacity: 0.9; }
+  .paste-box { display: none; gap: 6px; }
+  .paste-box.show { display: flex; }
+  .paste-input {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 9px; padding: 7px 10px; font-size: 11.5px; outline: none;
+  }
+  .paste-input:focus { border-color: var(--accent); }
+  .paste-submit {
+    background: var(--accent); color: #fff; border: none; border-radius: 9px;
+    padding: 7px 12px; font-weight: 700; font-size: 11.5px; cursor: pointer;
+  }
+
+  .settings-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; display: flex; flex-direction: column; gap: 16px;
+    box-shadow: var(--shadow-card), var(--inset-top);
+  }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { padding-bottom: 0; border-bottom: 0; }
+  .setting-title { font-weight: 700; font-size: 13.5px; }
+  .setting-desc { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius);
+    padding: 36px 20px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;
+  }
+
+  /* ---------------- Modal ---------------- */
   .info-modal-backdrop {
-    position: fixed; inset: 0; background: rgba(10, 12, 22, 0.55);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    position: fixed; inset: 0; background: rgba(10, 12, 22, 0.52);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     display: none; align-items: center; justify-content: center; padding: 18px; z-index: 100;
   }
   .info-modal-backdrop.show { display: flex; }
   .info-modal-card {
     width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow);
-    display: flex; flex-direction: column; gap: 10px;
+    border-radius: 18px; padding: 18px 20px; box-shadow: var(--shadow-hover);
+    display: flex; flex-direction: column; gap: 12px;
   }
   .info-modal-head { display: flex; align-items: center; justify-content: space-between; }
-  .info-modal-title { font-size: 14px; font-weight: 700; }
+  .info-modal-title { font-size: 14.5px; font-weight: 750; }
   .info-modal-close {
     background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2);
-    border-radius: 7px; width: 24px; height: 24px; cursor: pointer; font-size: 11px;
+    border-radius: 8px; width: 26px; height: 26px; cursor: pointer; font-size: 11px;
   }
-  .info-modal-body { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+  .info-modal-body { display: flex; flex-direction: column; gap: 7px; max-height: 270px; overflow-y: auto; }
   .info-modal-row {
     display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    padding: 8px 10px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--border);
+    padding: 9px 11px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
     font-size: 12px;
   }
   .info-modal-label { color: var(--text-2); font-weight: 600; }
   .info-modal-val { font-weight: 700; text-align: right; word-break: break-all; }
   .info-modal-item {
-    padding: 7px 10px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--border);
-    font-size: 12px; font-weight: 500;
+    padding: 8px 11px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 550;
   }
   .info-modal-note {
-    margin-top: 4px; padding: 8px 10px; border-radius: 9px;
-    background: var(--accent-soft); color: var(--text-2); font-size: 11px; line-height: 1.45;
+    margin-top: 2px; padding: 9px 11px; border-radius: 10px;
+    background: var(--accent-soft); color: var(--text-2); font-size: 11px; line-height: 1.5;
   }
 
   .view-panel { display: none; flex-direction: column; gap: 14px; }
@@ -634,12 +706,13 @@ UI_HTML = r"""<!DOCTYPE html>
 
     <nav class="nav">
       <button class="nav-item active" id="navDashboard" onclick="switchTab('dashboard')">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
         <span>대시보드</span>
       </button>
       <button class="nav-item" id="navAccounts" onclick="switchTab('accounts')">
         <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>계정 연동</span>
+        <span class="nav-count" id="linkedCountBadge">0</span>
       </button>
       <button class="nav-item" id="navSettings" onclick="switchTab('settings')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -649,13 +722,14 @@ UI_HTML = r"""<!DOCTYPE html>
 
     <div class="sidebar-spacer"></div>
 
-    <div class="sidebar-card">
-      <button class="collapse-btn" onclick="toggleCompact()">
-        <span>미니 위젯으로 축소</span>
-      </button>
+    <div class="sidebar-footer">
+      <div class="sidebar-btn-row">
+        <button class="collapse-btn" onclick="toggleCompact()">미니 위젯</button>
+        <button class="theme-btn" id="btnThemeToggle" onclick="toggleTheme()" title="라이트 / 다크 테마 전환"></button>
+      </div>
       <div class="sidebar-meta">
         <span class="version-link" id="appVersionBadge" onclick="checkForUpdates(true)" title="업데이트 확인">v__APP_VERSION__</span>
-        <span id="updatedAt">동기화 중...</span>
+        <span id="updatedAt">동기화 중</span>
       </div>
     </div>
   </aside>
@@ -667,7 +741,7 @@ UI_HTML = r"""<!DOCTYPE html>
         <span>NoopToken</span>
       </div>
       <div class="compact-actions">
-        <button class="pill-btn active" id="btnDisplayModeCompact" onclick="toggleDisplayMode()">사용량 기준</button>
+        <button class="pill-btn active" id="btnDisplayModeCompact" onclick="toggleDisplayMode()">사용량</button>
         <button class="pill-btn" id="btnGlobalRefreshCompact" onmousedown="event.stopPropagation()" onpointerdown="event.stopPropagation()" onclick="manualGlobalRefresh()" title="새로고침 (5초 쿨다운)">
           <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         </button>
@@ -676,10 +750,15 @@ UI_HTML = r"""<!DOCTYPE html>
     </div>
 
     <header class="topbar">
-      <h1 class="page-title" id="pageTitle">사용량 대시보드</h1>
+      <div class="page-title-wrap">
+        <h1 class="page-title" id="pageTitle">대시보드</h1>
+        <span class="page-sub" id="pageSub">연동된 AI 모델별 실시간 한도와 리셋 일정을 한눈에 확인합니다</span>
+      </div>
       <div class="page-actions">
-        <button class="pill-btn active" id="btnDisplayMode" onclick="toggleDisplayMode()">사용량 기준</button>
-        <button class="pill-btn" onclick="toggleAllBoxes()">접기/펼치기</button>
+        <div class="seg-ctrl" id="modeSegCtrl">
+          <button class="seg-btn active" id="segUsed" onclick="setDisplayMode('used')">사용량</button>
+          <button class="seg-btn" id="segRem" onclick="setDisplayMode('remaining')">잔여량</button>
+        </div>
         <button class="pill-btn" id="btnGlobalRefresh" onclick="manualGlobalRefresh()" title="전체 강제 새로고침 (5초 쿨다운)">
           <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
           <span>새로고침</span>
@@ -697,8 +776,7 @@ UI_HTML = r"""<!DOCTYPE html>
       </div>
 
       <section class="view-panel active" id="viewDashboard">
-        <div class="briefing-grid" id="briefingGrid"></div>
-        <div class="mini-bar" id="miniBar"></div>
+        <div class="status-ribbon" id="statusRibbon"></div>
         <div class="cards" id="cardsContainer"></div>
       </section>
 
@@ -708,6 +786,13 @@ UI_HTML = r"""<!DOCTYPE html>
 
       <section class="view-panel" id="viewSettings">
         <div class="settings-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">화면 테마</div>
+              <div class="setting-desc">라이트 모드와 다크 모드를 자유롭게 전환합니다.</div>
+            </div>
+            <button class="pill-btn" id="btnThemeSettings" onclick="toggleTheme()">테마 전환</button>
+          </div>
           <div class="setting-row">
             <div>
               <div class="setting-title">표시 기준</div>
@@ -725,7 +810,7 @@ UI_HTML = r"""<!DOCTYPE html>
           <div class="setting-row">
             <div>
               <div class="setting-title">창 항상 위에 고정</div>
-              <div class="setting-desc">다른 창 위에 위젯을 항상 띄워 둡니다.</div>
+              <div class="setting-desc">다른 창 위에 NoopToken을 항상 띄워 둡니다.</div>
             </div>
             <button class="pill-btn" id="btnPin" onclick="togglePin()">꺼짐</button>
           </div>
@@ -766,6 +851,23 @@ UI_HTML = r"""<!DOCTYPE html>
   let foldedBoxes = JSON.parse(localStorage.getItem("ai_quota_folded_boxes") || "{}");
   let cardOrder = JSON.parse(localStorage.getItem("ai_quota_card_order") || '["antigravity","claude","cursor","codex"]');
   let boxOrder = JSON.parse(localStorage.getItem("ai_quota_box_order") || "{}");
+  let themePref = localStorage.getItem("nooptoken_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+  function applyTheme(t) {
+    themePref = t;
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("nooptoken_theme", t);
+    const btn = document.getElementById("btnThemeToggle");
+    const sBtn = document.getElementById("btnThemeSettings");
+    const sunSvg = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    const moonSvg = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    if (btn) btn.innerHTML = t === "dark" ? sunSvg : moonSvg;
+    if (sBtn) sBtn.textContent = t === "dark" ? "다크 모드" : "라이트 모드";
+  }
+
+  function toggleTheme() {
+    applyTheme(themePref === "dark" ? "light" : "dark");
+  }
 
   function saveStateToLocal() {
     localStorage.setItem("ai_quota_display_mode", displayMode);
@@ -783,27 +885,34 @@ UI_HTML = r"""<!DOCTYPE html>
       if (nav) nav.classList.toggle("active", t === tab);
       if (view) view.classList.toggle("active", t === tab);
     });
-    const titles = { dashboard: "사용량 대시보드", accounts: "계정 연동", settings: "설정" };
-    const pt = document.getElementById("pageTitle");
-    if (pt) pt.textContent = titles[tab] || "NoopToken";
+    const meta = {
+      dashboard: ["대시보드", "연동된 AI 모델별 실시간 한도와 리셋 일정을 한눈에 확인합니다"],
+      accounts: ["계정 연동", "AI 코딩 에이전트 계정을 연결하거나 상태를 관리합니다"],
+      settings: ["설정", "테마, 알림, 표시 기준 및 업데이트를 설정합니다"]
+    };
+    const [title, sub] = meta[tab] || ["NoopToken", ""];
+    document.getElementById("pageTitle").textContent = title;
+    document.getElementById("pageSub").textContent = sub;
   }
 
   function updateModeHeaderUI() {
-    const label = displayMode === "used" ? "사용량 기준" : "잔여량 기준";
-    ["btnDisplayMode", "btnDisplayModeCompact", "btnDisplayModeSettings"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.textContent = label;
-        el.classList.toggle("active", displayMode === "used");
-      }
-    });
+    document.getElementById("segUsed")?.classList.toggle("active", displayMode === "used");
+    document.getElementById("segRem")?.classList.toggle("active", displayMode === "remaining");
+    const cBtn = document.getElementById("btnDisplayModeCompact");
+    if (cBtn) cBtn.textContent = displayMode === "used" ? "사용량" : "잔여량";
+    const sBtn = document.getElementById("btnDisplayModeSettings");
+    if (sBtn) sBtn.textContent = displayMode === "used" ? "사용량 기준" : "잔여량 기준";
   }
 
-  function toggleDisplayMode() {
-    displayMode = (displayMode === "used") ? "remaining" : "used";
+  function setDisplayMode(mode) {
+    displayMode = mode;
     saveStateToLocal();
     updateModeHeaderUI();
     if (lastData) render(lastData);
+  }
+
+  function toggleDisplayMode() {
+    setDisplayMode(displayMode === "used" ? "remaining" : "used");
   }
 
   function updateNotifyUI(enabled) {
@@ -830,37 +939,46 @@ UI_HTML = r"""<!DOCTYPE html>
     const r = Math.max(0, Math.min(100, Number(remPct) || 0));
     if (displayMode === "used") {
       const used = Math.round((100 - r) * 10) / 10;
-      return { val: used, pct: used, width: used, tag: "사용", summaryTag: "사용" };
+      return { pct: used, width: used, tag: "사용" };
     }
     const rem = Math.round(r * 10) / 10;
-    return { val: rem, pct: rem, width: rem, tag: "남음", summaryTag: "남음" };
+    return { pct: rem, width: rem, tag: "남음" };
+  }
+
+  function getColor(remPct) {
+    if (remPct >= 50) return "var(--ok)";
+    if (remPct >= 20) return "var(--warn)";
+    return "var(--danger)";
+  }
+
+  function getSoftBg(remPct) {
+    if (remPct >= 50) return "var(--ok-soft)";
+    if (remPct >= 20) return "var(--warn-soft)";
+    return "var(--danger-soft)";
+  }
+
+  function shortBarTag(name) {
+    const l = String(name || "").toLowerCase();
+    if (l.includes("5시간") || l.includes("5h")) return "5h";
+    if (l.includes("주간") || l.includes("weekly")) return "Weekly";
+    if (l.includes("opus")) return "Opus";
+    if (l.includes("sonnet")) return "Sonnet";
+    return name;
   }
 
   function getBrandIconSvg(id) {
-    if (id === "antigravity") {
-      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/></svg>`;
-    }
-    if (id === "claude") {
-      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>`;
-    }
-    if (id === "cursor") {
-      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l16 7.5-7.2 2.3L10.5 20 4 3z"/></svg>`;
-    }
+    if (id === "antigravity") return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/></svg>`;
+    if (id === "claude") return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>`;
+    if (id === "cursor") return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l16 7.5-7.2 2.3L10.5 20 4 3z"/></svg>`;
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 20 7 20 17 12 22 4 17 4 7 12 2"/><circle cx="12" cy="12" r="3"/></svg>`;
   }
 
   function getGripSvg() {
-    return `<svg viewBox="0 0 10 14"><circle cx="2.5" cy="2.5" r="1.2"/><circle cx="7.5" cy="2.5" r="1.2"/><circle cx="2.5" cy="7" r="1.2"/><circle cx="7.5" cy="7" r="1.2"/><circle cx="2.5" cy="11.5" r="1.2"/><circle cx="7.5" cy="11.5" r="1.2"/></svg>`;
-  }
-
-  function getColor(remPct) {
-    if (remPct >= 50) return "#16b36e";
-    if (remPct >= 20) return "#f59e0b";
-    return "#ef4462";
+    return `<svg viewBox="0 0 8 14"><circle cx="2" cy="2.5" r="1.1"/><circle cx="6" cy="2.5" r="1.1"/><circle cx="2" cy="7" r="1.1"/><circle cx="6" cy="7" r="1.1"/><circle cx="2" cy="11.5" r="1.1"/><circle cx="6" cy="11.5" r="1.1"/></svg>`;
   }
 
   function shortName(id) {
-    if (id === "antigravity") return "AGY";
+    if (id === "antigravity") return "Antigravity";
     if (id === "claude") return "Claude";
     if (id === "cursor") return "Cursor";
     return "Codex";
@@ -878,26 +996,13 @@ UI_HTML = r"""<!DOCTYPE html>
     if (lastData) render(lastData);
   }
 
-  function toggleAllBoxes() {
-    if (!lastData || !lastData.providers) return;
-    const anyUnfolded = lastData.providers.some(p => !foldedCards[p.id]);
-    lastData.providers.forEach(p => {
-      foldedCards[p.id] = anyUnfolded;
-      (p.boxes || []).forEach(b => { foldedBoxes[b.id] = anyUnfolded; });
-    });
-    saveStateToLocal();
-    render(lastData);
-  }
-
   async function fetchData(force = false, providerId = "") {
     try {
       let qs = "";
       if (force) qs = providerId ? `?force=1&provider=${encodeURIComponent(providerId)}` : "?force=1";
       const r = await fetch("/api/quotas" + qs);
       return await r.json();
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   let loginPollTimer = null;
@@ -916,10 +1021,7 @@ UI_HTML = r"""<!DOCTYPE html>
       await refreshNow(true);
       if (lastData && lastData.providers) {
         const p = lastData.providers.find(x => x.id === providerId);
-        if (p && p.logged_in) {
-          clearInterval(loginPollTimer);
-          loginPollTimer = null;
-        }
+        if (p && p.logged_in) { clearInterval(loginPollTimer); loginPollTimer = null; }
       }
       if (ticks > 45) { clearInterval(loginPollTimer); loginPollTimer = null; }
     }, 2000);
@@ -955,64 +1057,64 @@ UI_HTML = r"""<!DOCTYPE html>
     } catch (e) {}
   }
 
-  function renderCardHtml(p, savedInputs) {
-    const isCardFolded = !!foldedCards[p.id];
-    const chevronFoldClass = isCardFolded ? "folded" : "";
-
-    if (!p.logged_in) {
-      const showPaste = openPasteBoxes[p.id] ? "show" : "";
-      const placeholder = p.id === "claude"
-        ? "로그인 후 화면에 뜬 인증코드 붙여넣기"
-        : "WorkosCursorSessionToken 값 붙여넣기";
-      const needsPaste = (p.id === "claude" || p.id === "cursor");
-      return `
-        <div class="card" data-card-id="${p.id}">
-          <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
-            <div class="provider-left">
-              <span class="drag-grip" title="드래그하여 순서 이동">${getGripSvg()}</span>
-              <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
-              <div class="provider-titles">
-                <span class="provider-name">${p.name}</span>
-                <span class="badge">미연동</span>
-              </div>
-            </div>
-            <div class="card-right">
-              <div class="chevron-badge ${chevronFoldClass}">▾</div>
-            </div>
-          </div>
-          <div class="card-body ${isCardFolded ? 'folded' : ''}">
-            <div class="login-box">
-              <button class="login-btn" onclick="openLogin('${p.id}', event)">${p.login_label || (p.name + " 로그인")}</button>
-              ${needsPaste ? `
-                <div class="paste-box ${showPaste}" id="paste_${p.id}">
-                  <input class="paste-input" id="input_${p.id}" placeholder="${placeholder}" onclick="event.stopPropagation()" />
-                  <button class="paste-submit" onclick="submitCodeOrToken('${p.id}', event)">연동</button>
-                </div>
-              ` : ""}
-              <div class="login-hint">${p.hint || ""}</div>
-            </div>
-          </div>
+  function renderStatusRibbon(orderedProviders) {
+    const el = document.getElementById("statusRibbon");
+    if (!el || compactMode) { if (el) el.innerHTML = ""; return; }
+    const logged = orderedProviders.filter(p => p.logged_in);
+    const running = orderedProviders.filter(p => p.running).map(p => shortName(p.id));
+    let peak = null;
+    logged.forEach(p => {
+      const used = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
+      if (!peak || used > peak.used) peak = { name: p.name, used, rem: p.remaining_pct };
+    });
+    const nextReset = logged.find(p => p.reset_text) || logged[0];
+    el.innerHTML = `
+      <div class="ribbon-stat">
+        <span class="ribbon-dot" style="background:${running.length ? 'var(--ok)' : 'var(--text-3)'};box-shadow:${running.length ? '0 0 0 3px var(--ok-soft)' : 'none'}"></span>
+        <div class="ribbon-text">
+          <span class="ribbon-label">실행 중</span>
+          <span class="ribbon-val">${running.length ? running.join(" · ") : "없음"}</span>
         </div>
-      `;
-    }
+      </div>
+      <div class="ribbon-stat">
+        <div class="ribbon-text">
+          <span class="ribbon-label">최대 사용</span>
+          <span class="ribbon-val" style="color:${peak ? getColor(peak.rem) : 'var(--text-3)'}">${peak ? `${peak.name} ${peak.used}%` : "-"}</span>
+        </div>
+      </div>
+      <div class="ribbon-stat">
+        <div class="ribbon-text">
+          <span class="ribbon-label">다음 리셋</span>
+          <span class="ribbon-val">${nextReset ? `${nextReset.name} · ${nextReset.reset_text}` : "-"}</span>
+        </div>
+      </div>
+    `;
+  }
 
+  function renderCardHtml(p) {
+    const isCardFolded = !!foldedCards[p.id];
     const col = getColor(p.remaining_pct);
+    const softBg = getSoftBg(p.remaining_pct);
     const cardMetric = getDisplayMetric(p.remaining_pct);
+    const circ = 2 * Math.PI * 20;
+
     const boxesHtml = (p.boxes || []).map(box => {
       const isBoxFolded = !!foldedBoxes[box.id];
       const bCol = getColor(box.remaining_pct);
       const boxMetric = getDisplayMetric(box.remaining_pct);
+      const dashOffset = circ * (1 - Math.max(0, Math.min(100, boxMetric.width)) / 100);
+
       const barsHtml = (box.bars || []).map(bar => {
         const barCol = getColor(bar.remaining_pct);
         const barMetric = getDisplayMetric(bar.remaining_pct);
         return `
           <div class="bar-row">
             <div class="bar-top">
-              <span class="bar-name">${bar.name}</span>
-              <div class="bar-meta">
+              <span class="bar-left">
+                <span class="bar-tag">${shortBarTag(bar.name)}</span>
                 ${bar.reset_text ? `<span class="bar-reset">${bar.reset_text}</span>` : ""}
-                <span class="bar-val" style="color:${barCol}">${barMetric.pct}% ${barMetric.tag}</span>
-              </div>
+              </span>
+              <span class="bar-val" style="color:${barCol}">${barMetric.pct}%</span>
             </div>
             <div class="bar-track">
               <div class="bar-fill" style="width:${barMetric.width}%; background:${barCol}"></div>
@@ -1023,21 +1125,33 @@ UI_HTML = r"""<!DOCTYPE html>
 
       return `
         <div class="group-box" data-box-id="${box.id}" data-provider-id="${p.id}">
-          <div class="box-header" onpointerdown="startBoxDrag(event, '${p.id}', '${box.id}')">
-            <div class="box-title-wrap">
-              <span class="drag-grip" title="드래그하여 박스 순서 이동">${getGripSvg()}</span>
-              <button class="box-title-btn" onpointerdown="event.stopPropagation()" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능한 모델 목록 보기">
-                <span>${box.title}</span>
-                ${box.subtitle ? `<span class="info-dot">ⓘ</span>` : ""}
-              </button>
+          <div class="group-tile">
+            <div class="ring-wrap" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능 모델 보기">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="var(--track)" stroke-width="4.5" />
+                <circle cx="24" cy="24" r="20" fill="none" stroke="${bCol}" stroke-width="4.5" stroke-linecap="round"
+                  stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}" />
+              </svg>
+              <div class="ring-center">
+                <span class="ring-num" style="color:${bCol}">${Math.round(boxMetric.pct)}%</span>
+                <span class="ring-unit">${boxMetric.tag}</span>
+              </div>
             </div>
-            <div class="box-right">
-              <span class="box-pct-badge" style="color:${bCol}">${boxMetric.pct}% ${boxMetric.tag}</span>
-              <span class="box-chevron ${isBoxFolded ? 'folded' : ''}">▾</span>
+            <div class="group-content">
+              <div class="box-header" onpointerdown="startBoxDrag(event, '${p.id}', '${box.id}')">
+                <div class="box-title-wrap">
+                  <span class="drag-grip">${getGripSvg()}</span>
+                  <button class="box-title-btn" onpointerdown="event.stopPropagation()" onclick="openBoxModelsModal('${p.id}', '${box.id}', event)" title="사용 가능한 모델 목록 보기">
+                    <span>${box.title}</span>
+                    ${box.subtitle ? `<span class="info-dot">ⓘ</span>` : ""}
+                  </button>
+                </div>
+                <span class="box-chevron ${isBoxFolded ? 'folded' : ''}" onclick="toggleBox('${box.id}')">▾</span>
+              </div>
+              <div class="box-body ${isBoxFolded ? 'folded' : ''}">
+                ${barsHtml}
+              </div>
             </div>
-          </div>
-          <div class="box-body ${isBoxFolded ? 'folded' : ''}">
-            ${barsHtml}
           </div>
         </div>
       `;
@@ -1047,24 +1161,24 @@ UI_HTML = r"""<!DOCTYPE html>
       <div class="card" data-card-id="${p.id}">
         <div class="card-header" onpointerdown="startCardDrag(event, '${p.id}')">
           <div class="provider-left">
-            <span class="drag-grip" title="드래그하여 순서 이동">${getGripSvg()}</span>
+            <span class="drag-grip">${getGripSvg()}</span>
             <div class="brand-icon brand-${p.id}">${getBrandIconSvg(p.id)}</div>
-            <div class="provider-titles">
-              <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
-                <span class="provider-name">${p.name}</span>
-                ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
-              </button>
-              <span class="badge">${p.plan || p.badge || "연동됨"}</span>
-              <button class="provider-refresh-btn" data-refresh-provider="${p.id}" title="수동 새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
-              <button class="logout-btn" title="연동 해제" onpointerdown="event.stopPropagation()" onclick="logoutProvider('${p.id}', event)">✕</button>
+            <div class="provider-title-stack">
+              <div class="provider-name-row">
+                <button class="provider-info-btn" onpointerdown="event.stopPropagation()" onclick="openProviderInfoModal('${p.id}', event)" title="계정 및 플랜 확인">
+                  <span class="provider-name">${p.name}</span>
+                  ${p.running ? `<span class="running-dot" title="현재 PC에서 실행 중"></span>` : ""}
+                </button>
+              </div>
+              <span class="plan-sub">${escapeHtml(p.plan || p.badge || "연동됨")}</span>
             </div>
           </div>
           <div class="card-right">
-            <div class="pct-pill">
-              <span class="rem-pct" style="color:${col}">${cardMetric.pct}%</span>
-              <span class="rem-label">${cardMetric.summaryTag}</span>
+            <div class="card-actions">
+              <button class="icon-action-btn provider-refresh-btn" data-refresh-provider="${p.id}" title="새로고침 (5초 쿨다운)" onpointerdown="event.stopPropagation()" onclick="refreshProvider('${p.id}', event)">↻</button>
             </div>
-            <div class="chevron-badge ${chevronFoldClass}">▾</div>
+            <span class="card-summary-badge" style="color:${col};background:${softBg}">${cardMetric.pct}%</span>
+            <div class="chevron-badge ${isCardFolded ? 'folded' : ''}">▾</div>
           </div>
         </div>
         <div class="card-body ${isCardFolded ? 'folded' : ''}">
@@ -1072,38 +1186,6 @@ UI_HTML = r"""<!DOCTYPE html>
             ${boxesHtml}
           </div>
         </div>
-      </div>
-    `;
-  }
-
-  let lastSnapshotUsed = JSON.parse(localStorage.getItem("nooptoken_last_used") || "{}");
-
-  function renderBriefing(orderedProviders) {
-    const el = document.getElementById("briefingGrid");
-    if (!el || compactMode) { if (el) el.innerHTML = ""; return; }
-    const logged = orderedProviders.filter(p => p.logged_in);
-    const running = orderedProviders.filter(p => p.running).map(p => shortName(p.id));
-    let peak = null;
-    logged.forEach(p => {
-      const used = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
-      if (!peak || used > peak.used) peak = { name: p.name, used, reset: p.reset_text || "실시간" };
-    });
-    const nextReset = logged.find(p => p.reset_text) || logged[0];
-    el.innerHTML = `
-      <div class="briefing-card">
-        <span class="briefing-label">실행 중인 AI</span>
-        <span class="briefing-value">${running.length ? running.join(" · ") : "실행 중인 앱 없음"}</span>
-        <span class="briefing-sub">연동 계정 ${logged.length} / ${orderedProviders.length}개</span>
-      </div>
-      <div class="briefing-card">
-        <span class="briefing-label">가장 높은 사용량</span>
-        <span class="briefing-value" style="color:${peak && peak.used >= 80 ? 'var(--danger)' : 'var(--text)'}">${peak ? `${peak.name} (${peak.used}%)` : "연동 필요"}</span>
-        <span class="briefing-sub">${peak ? `기준: 최대 사용 구간` : "계정 연동 탭에서 로그인하세요"}</span>
-      </div>
-      <div class="briefing-card">
-        <span class="briefing-label">가장 빠른 리셋</span>
-        <span class="briefing-value">${nextReset ? nextReset.reset_text : "-"}</span>
-        <span class="briefing-sub">${nextReset ? nextReset.name : "대기 중"}</span>
       </div>
     `;
   }
@@ -1131,7 +1213,7 @@ UI_HTML = r"""<!DOCTYPE html>
                   <div class="account-sub">${escapeHtml(p.account || "연동됨")} · ${escapeHtml(p.plan || p.badge || "")}</div>
                 </div>
               </div>
-              <span class="badge" style="color:var(--ok);border-color:rgba(22,179,110,0.3);">연동됨</span>
+              <span class="status-pill linked">연동됨</span>
             </div>
             <div class="account-actions">
               <button class="pill-btn" onclick="openProviderInfoModal('${p.id}', event)">상세 정보</button>
@@ -1154,10 +1236,10 @@ UI_HTML = r"""<!DOCTYPE html>
                 <div class="account-sub">${escapeHtml(p.hint || "계정을 연동하면 실시간 한도를 표시합니다.")}</div>
               </div>
             </div>
-            <span class="badge">미연동</span>
+            <span class="status-pill">미연동</span>
           </div>
           <div class="account-actions">
-            <button class="login-btn" style="width:100%;" onclick="openLogin('${p.id}', event)">${p.login_label || (p.name + " 로그인")}</button>
+            <button class="login-btn" onclick="openLogin('${p.id}', event)">${p.login_label || (p.name + " 로그인")}</button>
           </div>
           ${needsPaste ? `
             <div class="paste-box ${showPaste}" id="paste_${p.id}">
@@ -1188,59 +1270,24 @@ UI_HTML = r"""<!DOCTYPE html>
     const orderedProviders = cardOrder.map(id => pMap[id]).filter(Boolean);
     data.providers.forEach(p => { if (!cardOrder.includes(p.id)) orderedProviders.push(p); });
 
-    renderBriefing(orderedProviders);
+    const linkedProviders = orderedProviders.filter(p => p.logged_in);
+    const badge = document.getElementById("linkedCountBadge");
+    if (badge) badge.textContent = `${linkedProviders.length}`;
+
+    renderStatusRibbon(orderedProviders);
     renderAccountsView(orderedProviders);
 
-    // Dashboard & Mini-widget show only logged-in providers (Accounts tab manages unlinked apps!)
-    const visibleProviders = orderedProviders.filter(p => p.logged_in);
-
-    const miniBar = document.getElementById("miniBar");
-    if (visibleProviders.length === 0) {
-      miniBar.innerHTML = "";
-    } else {
-      miniBar.innerHTML = visibleProviders.map(p => {
-        const col = getColor(p.remaining_pct);
-        const m = getDisplayMetric(p.remaining_pct);
-        const curUsed = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
-        const prevUsed = lastSnapshotUsed[p.id];
-        const delta = (typeof prevUsed === "number") ? Math.round((curUsed - prevUsed) * 10) / 10 : 0;
-        const deltaHtml = delta !== 0
-          ? `<span class="delta-tag ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : ''}${delta}%</span>`
-          : "";
-        return `
-          <div class="mini-pill" onclick="toggleCard('${p.id}')">
-            <div class="mini-pill-top">
-              <span>${shortName(p.id)}</span>
-              <span style="display:inline-flex;align-items:center;gap:4px;">
-                ${deltaHtml}
-                <span style="width:6px;height:6px;border-radius:50%;background:${col};"></span>
-              </span>
-            </div>
-            <div class="mini-pill-val" style="color:${col}">${m.pct}% <span style="font-size:10px;font-weight:600;color:var(--text-3);">${m.tag}</span></div>
-            <div class="mini-progress"><div class="mini-progress-fill" style="width:${m.width}%;background:${col}"></div></div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    // Save latest used snapshot for delta display
-    const nextSnap = {};
-    orderedProviders.forEach(p => {
-      if (p.logged_in) nextSnap[p.id] = Math.round((100 - (Number(p.remaining_pct) || 0)) * 10) / 10;
-    });
-    localStorage.setItem("nooptoken_last_used", JSON.stringify(nextSnap));
-
     const container = document.getElementById("cardsContainer");
-    if (visibleProviders.length === 0) {
+    if (linkedProviders.length === 0) {
       container.innerHTML = `
-        <div class="empty-compact">
-          <div style="font-weight:700;font-size:13.5px;">연동된 AI 계정이 없습니다</div>
-          <div style="font-size:12px;color:var(--text-3);">${compactMode ? '전체 창으로 확장해 계정을 먼저 연동하세요.' : '좌측 [계정 연동] 탭에서 계정을 연결하세요.'}</div>
+        <div class="empty-state">
+          <div style="font-weight:750;font-size:15px;">연동된 AI 계정이 없습니다</div>
+          <div style="font-size:12px;color:var(--text-3);">${compactMode ? '전체 창으로 확장해 계정을 먼저 연동하세요.' : '좌측 [계정 연동] 탭에서 계정을 연결하면 실시간 게이지가 표시됩니다.'}</div>
           <button class="pill-btn active" onclick="${compactMode ? 'toggleCompact()' : "switchTab('accounts')"}">${compactMode ? '전체 창으로 확장' : '계정 연동으로 이동'}</button>
         </div>
       `;
     } else {
-      container.innerHTML = visibleProviders.map(p => renderCardHtml(p, savedInputs)).join("");
+      container.innerHTML = linkedProviders.map(p => renderCardHtml(p)).join("");
     }
 
     Object.keys(savedInputs).forEach(id => {
@@ -1257,7 +1304,6 @@ UI_HTML = r"""<!DOCTYPE html>
     if (!cardEl || !container) return;
     const startY = e.clientY;
     let moved = false;
-
     const onMove = (ev) => {
       if (!moved && Math.abs(ev.clientY - startY) < 6) return;
       if (!moved) { moved = true; isDragging = true; cardEl.classList.add("dragging"); }
@@ -1268,7 +1314,6 @@ UI_HTML = r"""<!DOCTYPE html>
       }
       container.appendChild(cardEl);
     };
-
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -1290,7 +1335,6 @@ UI_HTML = r"""<!DOCTYPE html>
     if (!boxEl || !listEl) return;
     const startY = e.clientY;
     let moved = false;
-
     const onMove = (ev) => {
       if (!moved && Math.abs(ev.clientY - startY) < 6) return;
       if (!moved) { moved = true; isDragging = true; boxEl.classList.add("dragging"); }
@@ -1301,7 +1345,6 @@ UI_HTML = r"""<!DOCTYPE html>
       }
       listEl.appendChild(boxEl);
     };
-
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -1531,6 +1574,7 @@ UI_HTML = r"""<!DOCTYPE html>
   }
 
   window.addEventListener("DOMContentLoaded", () => {
+    applyTheme(themePref);
     updateModeHeaderUI();
     setTimeout(() => refreshNow(false), 120);
     setTimeout(() => checkForUpdates(false), 2000);
