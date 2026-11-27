@@ -40,9 +40,16 @@ CLAUDE_SCOPES = "user:profile user:inference"
 CODEX_CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 CODEX_SCOPES = "openid profile email offline_access"
 
-# In-memory cache to avoid hammering APIs every 5s (especially Claude 429 rate limits)
+# In-memory cache to avoid hammering APIs (Claude has strict 429 rate limits; Antigravity updates rapidly)
 _MEM_CACHE: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL_SECONDS = 45.0
+PROVIDER_CACHE_TTL: Dict[str, float] = {
+    "antigravity": 10.0,
+    "claude": 45.0,
+    "cursor": 15.0,
+    "codex": 15.0,
+}
+_AGY_MODELS_CACHE: Dict[str, Any] = {"ts": 0.0, "models": {}}
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "always_on_top": True,
@@ -146,7 +153,8 @@ def _get_cached_provider(cfg: Dict[str, Any], provider_id: str, force: bool = Fa
     if force:
         return None
     entry = _MEM_CACHE.get(provider_id)
-    if entry and (time.time() - entry.get("ts", 0)) < CACHE_TTL_SECONDS:
+    ttl = PROVIDER_CACHE_TTL.get(provider_id, CACHE_TTL_SECONDS)
+    if entry and (time.time() - entry.get("ts", 0)) < ttl:
         return entry.get("data")
     return None
 
@@ -324,17 +332,23 @@ def fetch_antigravity_usage(cfg: Dict[str, Any], force: bool = False) -> Dict[st
         base_url = "https://daily-cloudcode-pa.googleapis.com"
 
         models_map: Dict[str, Any] = {}
-        try:
-            r_mod = requests.post(
-                f"{base_url}/v1internal:fetchAvailableModels",
-                headers=headers,
-                json={},
-                timeout=3.5,
-            )
-            if r_mod.status_code == 200:
-                models_map = r_mod.json().get("models") or {}
-        except Exception:
-            pass
+        if _AGY_MODELS_CACHE["models"] and (time.time() - _AGY_MODELS_CACHE["ts"]) < 600.0:
+            models_map = _AGY_MODELS_CACHE["models"]
+        else:
+            try:
+                r_mod = requests.post(
+                    f"{base_url}/v1internal:fetchAvailableModels",
+                    headers=headers,
+                    json={},
+                    timeout=3.5,
+                )
+                if r_mod.status_code == 200:
+                    models_map = r_mod.json().get("models") or {}
+                    if models_map:
+                        _AGY_MODELS_CACHE["ts"] = time.time()
+                        _AGY_MODELS_CACHE["models"] = models_map
+            except Exception:
+                pass
 
         def _base_model_name(name: str) -> str:
             return re.sub(

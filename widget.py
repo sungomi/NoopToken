@@ -1005,7 +1005,7 @@ UI_HTML = r"""<!DOCTYPE html>
     try {
       let qs = "";
       if (force) qs = providerId ? `?force=1&provider=${encodeURIComponent(providerId)}` : "?force=1";
-      const r = await fetch("/api/quotas" + qs);
+      const r = await fetch("/api/quotas" + qs, { cache: "no-store" });
       return await r.json();
     } catch (e) { return null; }
   }
