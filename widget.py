@@ -19,7 +19,7 @@ import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import requests
 
 from providers import (
@@ -2370,6 +2370,21 @@ def _resolve_asset_path(filename: str) -> Path:
     return Path(__file__).resolve().parent / "assets" / filename
 
 
+_SERVER_WORKER_PROC: Optional[subprocess.Popen] = None
+
+
+def _terminate_server_worker() -> None:
+    global _SERVER_WORKER_PROC
+    proc = _SERVER_WORKER_PROC
+    _SERVER_WORKER_PROC = None
+    if proc is not None:
+        try:
+            if proc.poll() is None:
+                proc.terminate()
+        except Exception:
+            pass
+
+
 def _patch_pywebview_winforms_deadlock() -> None:
     """
     Fixes the pywebview 6.x + pythonnet 3.x GIL / WinForms STA UI thread deadlock on Windows:
@@ -2432,6 +2447,21 @@ def _patch_pywebview_winforms_deadlock() -> None:
                 try:
                     logging.info("[GUI] STA thread create() entered")
                     browser = wf.BrowserView.BrowserForm(window, wf.cache_dir)
+
+                    def _on_form_closing(sender, args):
+                        try:
+                            logging.info("[GUI] FormClosing triggered; hiding window and exiting immediately.")
+                            browser.Hide()
+                        except Exception:
+                            pass
+                        _terminate_server_worker()
+                        os._exit(0)
+
+                    try:
+                        browser.FormClosing += _on_form_closing
+                    except Exception as close_ex:
+                        logging.warning(f"[GUI] Could not attach fast FormClosing handler: {close_ex}")
+
                     try:
                         ico_path = _resolve_asset_path("icon.ico")
                         if ico_path.exists():
@@ -2463,6 +2493,7 @@ def _patch_pywebview_winforms_deadlock() -> None:
                     logging.error(f"[GUI] Exception in STA create(): {ex}\n{traceback.format_exc()}")
                 finally:
                     gui_done_event.set()
+                    _terminate_server_worker()
                     os._exit(0)
 
             if window.uid == "master":
@@ -2575,11 +2606,13 @@ def main():
         # and ZERO GIL contention with pythonnet / WinForms.
         port = _find_free_port(17890)
         OAUTH_STATE["server_port"] = port
+        global _SERVER_WORKER_PROC
         server_proc = subprocess.Popen(
             _build_server_worker_cmd(port, os.getpid()),
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
             close_fds=True,
         )
+        _SERVER_WORKER_PROC = server_proc
         logging.info(f"Spawned isolated server worker process PID={server_proc.pid} on port {port}")
         url = f"http://127.0.0.1:{port}"
         worker_healthy = False
@@ -2634,6 +2667,7 @@ def main():
 
         def _on_closed():
             logging.info("Widget window closed by user; terminating process cleanly.")
+            _terminate_server_worker()
             os._exit(0)
 
         try:
@@ -2643,7 +2677,14 @@ def main():
 
         logging.info(f"{APP_NAME} v{APP_VERSION} window created at {url} (log: {log_path})")
         print(f"{APP_NAME} v{APP_VERSION} started at {url}")
-        webview.start(debug=False)
+        start_kwargs: Dict[str, Any] = {"debug": False}
+        if platform.system() == "Windows":
+            wv_storage = _get_runtime_dir() / "webview2"
+            wv_storage.mkdir(parents=True, exist_ok=True)
+            start_kwargs["private_mode"] = False
+            start_kwargs["storage_path"] = str(wv_storage)
+        webview.start(**start_kwargs)
+        _terminate_server_worker()
         os._exit(0)
     except Exception as e:
         logging.error(f"WebView startup error: {e}\n{traceback.format_exc()}")
