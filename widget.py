@@ -851,7 +851,7 @@ UI_HTML = r"""<!DOCTYPE html>
   let foldedBoxes = JSON.parse(localStorage.getItem("ai_quota_folded_boxes") || "{}");
   let cardOrder = JSON.parse(localStorage.getItem("ai_quota_card_order") || '["antigravity","claude","cursor","codex"]');
   let boxOrder = JSON.parse(localStorage.getItem("ai_quota_box_order") || "{}");
-  let themePref = localStorage.getItem("nooptoken_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  let themePref = localStorage.getItem("nooptoken_theme") || "light";
 
   function applyTheme(t) {
     themePref = t;
@@ -2442,14 +2442,14 @@ def _patch_pywebview_winforms_deadlock() -> None:
                     wf.BrowserView.instances[window.uid] = browser
                     window.events.before_show.set()
                     try:
-                        is_dark = load_config().get("theme", "dark") != "light"
+                        is_dark = load_config().get("theme", "light") == "dark"
                         _apply_windows_window_style(int(browser.Handle.ToInt64()), dark=is_dark)
                     except Exception:
                         pass
                     browser.Show()
                     browser.Activate()
                     try:
-                        is_dark = load_config().get("theme", "dark") != "light"
+                        is_dark = load_config().get("theme", "light") == "dark"
                         _apply_windows_window_style(int(browser.Handle.ToInt64()), dark=is_dark)
                     except Exception:
                         pass
@@ -2616,7 +2616,7 @@ def main():
             _patch_pywebview_winforms_deadlock()
 
         cfg = load_config()
-        init_bg = "#f5f6fa" if cfg.get("theme") == "light" else "#0b0d15"
+        init_bg = "#0b0d15" if cfg.get("theme") == "dark" else "#f5f6fa"
         window = webview.create_window(
             title=APP_NAME,
             url=url,
