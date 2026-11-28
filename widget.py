@@ -2437,8 +2437,10 @@ def _patch_pywebview_winforms_deadlock() -> None:
                         if ico_path.exists():
                             from System.Drawing import Icon as DotNetIcon
                             browser.Icon = DotNetIcon(str(ico_path))
+                        # Hide duplicate small icon in the Windows title bar (app sidebar already displays the NoopToken icon; taskbar still uses the EXE icon)
+                        browser.ShowIcon = False
                     except Exception as icon_ex:
-                        logging.warning(f"[GUI] Could not set WinForms window icon: {icon_ex}")
+                        logging.warning(f"[GUI] Could not configure WinForms window icon: {icon_ex}")
                     wf.BrowserView.instances[window.uid] = browser
                     window.events.before_show.set()
                     try:
